@@ -1,0 +1,530 @@
+#------------------------------------------------------------*- tcl -*-
+# Tests for GUI
+#----------------------------------------------------------------------
+# $Revision$
+#----------------------------------------------------------------------
+
+lappend ::auto_path /home/peter/src/TkTest
+package require TkTest
+wm withdraw .
+
+proc XauthSecure {} {
+    global tcl_platform
+
+    if {[string compare unix $tcl_platform(platform)]} {
+	# This makes no sense outside of Unix
+	return
+    }
+    set hosts [exec xhost]
+    # the first line is info only
+    foreach host [lrange [split $hosts \n] 1 end] {
+	exec xhost -$host
+    }
+    exec xhost -
+}
+XauthSecure
+
+proc RestartClient {{mode 0}} {
+    set ::clientfile nagelfar.tcl
+    if {[file exists ${::clientfile}_i]} {
+        set ::clientfile ${::clientfile}_i
+    }
+
+    if {![catch {send -async Nagelfar exit}]} {
+        update
+        after 500
+    }
+
+    switch $mode {
+        0 { set slavepid [exec $::clientfile -gui _testfile_ &] }
+        1 { set slavepid [exec $::clientfile -gui &] }
+        2 { set slavepid [exec $::clientfile &] }
+    }
+
+    after 1000
+    while {[catch {tktest::init Nagelfar}]} {
+        after 500
+    }
+    tktest::cmd wm geometry . +10+10
+
+    set files [tktest::widget -class Listbox -pos 1 -eval "get 0 end"]
+    if {($mode == 0 && $files ne "_testfile_") || \
+            ($mode != 0 && $files ne "")} {
+        exec kill $slavepid
+        puts "Another nagelfar is running. Can't do GUI tests."
+        exit
+    }
+}
+
+proc DeleteFileToTest {file} {
+    set w [tktest::widget -class Listbox -pos 1]
+    set cont [tktest::cmd $w get 0 end]
+    set i [lsearch $cont $file]
+    if {$i < 0} return
+
+    tktest::cmd $w see $i
+    set coord [tktest::coord $w bbox $i]
+    tktest::mouse left $coord
+    tktest::key Delete
+}
+
+proc AddFileToTest {file {dialog 0}} {
+    # Dialog = 1 : use gui
+    # Dialog = 2 ; use gui+cancel
+    if {$dialog != 0} {
+        tktest::waitFocus press Add 1
+        if {$dialog != 1} {
+            tktest::press Cancel
+        } else {
+            set e [tktest::widget -class Entry]
+            tktest::cmd $e insert end $file
+            tktest::press Open
+        }
+    }
+    if {$dialog != 1} {
+        tktest::cmd fileDropFile $file
+    }
+}
+
+proc ResetFilters {} {
+    # FIXA: there should be a GUI way of doing this.
+    tktest::cmd set ::Nagelfar(filter) {}
+}
+
+# Get all lines from the text widget, as a list
+proc GetTextLines {} {
+    set str [tktest::widget -class Text -eval "get 1.0 end"]
+    return [split [string trim $str] \n]
+}
+
+test gui-1.1 {Run check without file} -body {
+    RestartClient 1
+
+    tktest::waitFocus press Check
+    set f [tktest::cmd focus]
+    tktest::key Return
+
+    set output [GetTextLines]
+    # No output lines
+    list [llength $output] [string match "*cepa*" $output] \
+            [string equal $f "."]
+} -result {0 0 0}
+
+test gui-1.2 {Run check without file} -body {
+    RestartClient 2
+
+    tktest::waitFocus press Check
+    set f [tktest::cmd focus]
+    tktest::key Return
+
+    set output [GetTextLines]
+    # No output lines
+    list [llength $output] [string match "*cepa*" $output] \
+            [string equal $f "."]
+} -result {0 0 0}
+
+RestartClient
+
+test gui-1.3 {Run check from GUI} -body {
+    createTestFile {
+        set apa 1
+        set bepa $cepa
+    }
+    tktest::key c Alt
+    set output [GetTextLines]
+    # Three lines of output, with error about cepa
+    list [llength $output] [string match "*cepa*" $output]
+} -result {3 1}
+
+test gui-2.1 {Message filter} -body {
+    createTestFile {
+        set bepa $cepa
+        somecmd $bepa
+        set $bepa 1
+    }
+    tktest::key C Alt
+    set output [GetTextLines]
+    # Five lines of output, with all error classes
+    set res [list [llength $output] [string match "* E * W * N *" $output]]
+
+    # Coordinates for the warning message
+    set w [tktest::widget -class Text]
+    set coord [tktest::coord $w bbox 3.3]
+    tktest::contextMenu $coord "Filter this message"
+
+    set output [GetTextLines]
+    # Four lines of output, with W gone
+    lappend res [llength $output] [string match "* E * W * N *" $output] \
+            [string match "* E * N *" $output]
+
+    ResetFilters
+
+    set res
+} -result {5 1 4 0 1}
+
+test gui-2.2 {Message filter, generic} -body {
+    createTestFile {
+        while 1 {
+            set apa 1
+         }
+        while 1 {
+            set apa 1
+          }
+        while 1 {
+            set apa 1
+           }
+    }
+    tktest::press Check
+    #after 5000 {set ::gurka 1}; vwait ::gurka
+    set output [GetTextLines]
+    # Five lines of output
+    set res [list [llength $output] [string match "* N Close*" $output]]
+
+    # Coordinates for the warning message
+    set w [tktest::widget -class Text]
+    set coord [tktest::coord $w bbox 3.3]
+    tktest::contextMenu $coord "Filter this message"
+
+    set output [GetTextLines]
+    # Four lines of output
+    lappend res [llength $output] [string match "* N Close*" $output]
+
+    # Coordinates for the warning message
+    set coord [tktest::coord $w bbox 3.3]
+    tktest::contextMenu $coord "Filter this generic message"
+
+    set output [GetTextLines]
+    # Two lines of output
+    lappend res [llength $output] [string match "* N Close*" $output]
+
+    ResetFilters
+
+    set res
+} -result {5 1 4 1 2 0}
+
+test gui-2.3 {Message filter, all files} -body {
+    createTestFile {
+        somecmd bepa
+    }
+    file rename -force _testfile_ _testfile2_.tcl
+    createTestFile {
+        somecmd bepa
+    }
+    AddFileToTest _testfile2_.tcl 1
+
+    tktest::press Check
+    set output [GetTextLines]
+    # Five lines of output
+    set res [list [llength $output] \
+            [string match "*file_*somecmd*file2_*somecmd*" $output]]
+    #after 5000 {set ::gurka 1}; vwait ::gurka
+
+    # Coordinates for the warning message
+    set w [tktest::widget -class Text]
+    set coord [tktest::coord $w bbox 2.3]
+    tktest::contextMenu $coord "Filter this message"
+
+    set output [GetTextLines]
+    # Four lines of output
+    lappend res [llength $output] \
+            [string match "*file2_*somecmd*" $output]
+    
+    ResetFilters
+    file delete -force _testfile2_.tcl
+    DeleteFileToTest _testfile2_.tcl
+
+    set res
+} -result {5 1 4 1}
+
+test gui-2.4 {Message filter, all files} -body {
+    createTestFile {
+        somecmd bepa
+    }
+    file rename -force _testfile_ _testfile2_
+    createTestFile {
+        somecmd bepa
+    }
+    AddFileToTest _testfile2_ 2
+
+    tktest::press Check
+    set output [GetTextLines]
+    # Five lines of output
+    set res [list [llength $output] \
+            [string match "*file_*somecmd*file2_*somecmd*" $output]]
+    #after 5000 {set ::gurka 1}; vwait ::gurka
+
+    # Coordinates for the warning message
+    set w [tktest::widget -class Text]
+    set coord [tktest::coord $w bbox 2.3]
+    tktest::contextMenu $coord "Filter this message in all files"
+
+    set output [GetTextLines]
+    # Three lines of output
+    lappend res [llength $output] \
+            [string match "*somecmd*" $output]
+    
+    ResetFilters
+    file delete -force _testfile2_
+    DeleteFileToTest _testfile2_
+
+    set res
+} -result {5 1 3 0}
+
+test gui-2.5 {Message filter, multiline message} -body {
+    createTestFile {
+        proc Bug {p1 p2} {
+        }
+        proc Bug {} {
+        }      
+    }
+    tktest::press Check
+    set output [GetTextLines]
+    set res [list [llength $output] [string match "*does not match previous*" $output]]
+
+    # Coordinates for the warning message
+    set w [tktest::widget -class Text]
+    set coord [tktest::coord $w bbox 3.3]
+    tktest::contextMenu $coord "Filter this message"
+
+    set output [GetTextLines]
+    lappend res [llength $output]
+
+    ResetFilters
+
+    set res
+} -result {4 1 2}
+
+test gui-3.1 {Debug mode} -body {
+    # Enter debug mode to exercise that code
+    set w [tktest::widget -class Text]
+
+    set str1 [tktest::cmd $w get 1.0 end]
+    tktest::keys PeterDebug
+    set str2 [tktest::cmd $w get 1.0 end]
+    tktest::keys PeterDebug
+    set str3 [tktest::cmd $w get 1.0 end]
+    
+    tktest::menu Debug "Reread Source"
+
+    if {$str1 ne $str2 || $str3 ne "\n"} {
+        set res '$str1'$str2'$str3'
+    } else {
+        set res 0
+    }
+    set res
+} -result 0
+
+test gui-4.1 {Edit window} -body {
+    RestartClient
+
+    set rw [tktest::widget -class Text]
+
+    tktest::menu Tools "Edit Window"
+    update
+    set w [tktest::widget -class Text]
+    tktest::cmd focus $w
+    tktest::keys "list apa bepa"
+    tktest::menu Edit Check
+    set str1 [string trim [tktest::cmd $rw get 1.0 end]]
+
+    tktest::keys "\nset apa\n"
+    tktest::menu Edit Check
+    set str2 [string trim [tktest::cmd $rw get 1.0 end]]
+
+    tktest::menu File Close
+
+    set res 0
+    if {$str1 ne "Done (E/W/N: 0/0/0)"} {
+        set res "$str1 != Done (E/W/N: 0/0/0)"
+    }
+    if {![string match "*Unknown variable*" $str2]} {
+        set res "str2: $str2"
+    }
+    set res
+} -result 0
+
+test gui-4.2 {Edit window, line counter} -body {
+    set rw [tktest::widget -class Text]
+
+    tktest::menu Tools "Edit Window"
+    update
+    set w [tktest::widget -class Text]
+    set l [tktest::widget -class Label -pos 0]
+
+    set res {}
+    tktest::cmd focus $w
+
+    tktest::keys "list apa bepa"
+    update
+    lappend res [tktest::cmd $l cget -text]
+
+    tktest::keys "\nset apa\n"
+    update
+    lappend res [tktest::cmd $l cget -text]
+
+    tktest::menu File Close
+
+    set res
+} -result {1 3}
+
+test gui-5.1 {Files, add, move delete} -body {
+    createTestFile {
+        somecmd bepa
+    }
+    file rename -force _testfile_ _testfile2_
+    createTestFile {
+        somecmd bepa
+    }
+    AddFileToTest _testfile2_ 2
+
+    # Rearrange files
+    set w [tktest::widget -class Listbox -pos 1]
+    tktest::cmd focus $w
+    tktest::key Down
+    tktest::key Up Shift
+
+    tktest::press Check
+    set output [GetTextLines]
+    set res [list [string match "*file2_*somecmd*file_*somecmd*" $output]]
+
+    tktest::key Up Shift
+    tktest::key Down Shift
+
+    tktest::press Check
+    set output [GetTextLines]
+    lappend res [string match "*file_*somecmd*file2_*somecmd*" $output]
+
+    tktest::key Delete
+
+    tktest::press Check
+    set output [GetTextLines]
+    lappend res [string match "*file_*somecmd*file2_*somecmd*" $output]
+    lappend res [string match "*file_*somecmd*" $output]
+    lappend res [tktest::cmd $w get 0 end]
+
+    file delete -force _testfile2_
+
+    set res
+} -result {1 1 0 1 _testfile_}
+
+test gui-6.1 {Traverse errors} -body {
+    set body [list "set apa 1"]
+    lappend body {set bepa $cepa}
+    for {set t 0} {$t < 100} {incr t} {
+        lappend body {set $bepa}
+    }
+    lappend body {set bepa $cepa}
+    createTestFile [join $body \n]
+    tktest::press Check
+    set res [llength [GetTextLines]]
+    set w [tktest::widget -class Text]
+    lappend res [lindex [tktest::cmd $w yview] 0]
+    tktest::press "Next E"
+    lappend res [lindex [tktest::cmd $w yview] 0]
+    tktest::key n Alt
+    lappend res [lindex [tktest::cmd $w yview] 1]
+    tktest::key N Alt
+    set res
+} -result {104 0 0 1}
+
+test gui-7.1 {Stop Button} -body {
+    set body [list "set apa 1"]
+    for {set t 0} {$t < 1000} {incr t} {
+        lappend body {set bepa 1}
+    }
+    createTestFile [join $body \n]
+    AddFileToTest _testfile_
+    AddFileToTest _testfile_
+    AddFileToTest _testfile_
+    AddFileToTest _testfile_
+    AddFileToTest _testfile_
+    AddFileToTest _testfile_
+    AddFileToTest _testfile_
+    AddFileToTest _testfile_
+    AddFileToTest _testfile_
+
+    tktest::press -async Check
+    after 1000 "set xyz 1"
+    vwait xyz
+    tktest::press Stop
+    after 100
+
+    set lines [GetTextLines]
+    set succ [expr {[llength $lines] < 10 && [string match *Done* $lines]}]
+    if {!$succ} {
+        set succ '[join $lines \n]'
+    }
+    set succ
+} -result {1}
+
+test gui-8.1 {DB Browser} -body {
+    tktest::waitFocus menu Tools "Browse Database"
+    set w [tktest::widget -class Entry]
+    tktest::cmd focus $w
+    tktest::keys "gurkmeja"
+    tktest::press Search
+    set info [GetTextLines]
+    set top [tktest::cmd winfo toplevel $w]
+    tktest::cmd destroy $top
+    set info
+} -result {{No match!}}
+
+test gui-8.2 {DB Browser} -body {
+    tktest::waitFocus menu Tools "Browse Database"
+    set w [tktest::widget -class Entry]
+    set top [tktest::cmd winfo toplevel $w]
+    tktest::cmd wm withdraw $top
+    update
+    # Test reuse of window
+    tktest::waitFocus menu Tools "Browse Database"
+    set w [tktest::widget -class Entry]
+    set top [tktest::cmd winfo toplevel $w]
+    tktest::cmd $w delete 0 end
+    tktest::cmd focus $w
+    tktest::keys "lsearch"
+    tktest::key Return
+    set info [GetTextLines]
+} -cleanup {
+    tktest::cmd destroy $top
+} -match glob -result {*-ascii*-index*}
+
+test gui-8.3 {DB Browser} -body {
+    tktest::waitFocus menu Tools "Browse Database"
+    set w [tktest::widget -class Entry]
+    tktest::cmd $w delete 0 end
+    tktest::cmd focus $w
+    # No search term
+    tktest::press Search
+    set info [GetTextLines]
+    set top [tktest::cmd winfo toplevel $w]
+    tktest::cmd destroy $top
+    set info
+} -result {{No match!}}
+
+test gui-8.4 {DB Browser} -body {
+    tktest::waitFocus menu Tools "Browse Database"
+    tktest::cmd $w delete 0 end
+    tktest::cmd focus $w
+    # Command with subcommand
+    tktest::keys "string"
+    tktest::key Return
+    set info [GetTextLines]
+    tktest::cmd destroy $top
+    set info
+} -match glob -result {*subcmd string bytelength*}
+
+test gui-8.5 {DB Browser} -body {
+    tktest::waitFocus menu Tools "Browse Database"
+    tktest::cmd $w delete 0 end
+    tktest::cmd focus $w
+    # Command with return value
+    tktest::keys "frame"
+    tktest::key Return
+    set info [GetTextLines]
+    tktest::cmd destroy $top
+    set info
+} -match glob -result {*return frame _obj,frame*}
+
+catch {tktest::menu File Exit}
+catch {send -async Nagelfar exit}
+update

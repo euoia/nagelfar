@@ -1,0 +1,205 @@
+<html>
+<body>
+<table cellpadding="2" cellspacing="0" border="1">
+  <tbody>
+    <tr>
+      <th>Test File</th>
+      <th>The result of checking it:</th>
+    </tr>
+    <tr>
+<td style="vertical-align: top; white-space: nowrap;"><pre>
+<span style="color: #808080">  1</span>  proc apa {} {
+<span style="color: #808080">  2</span>  
+<span style="color: #808080">  3</span>      set bepa 1
+<span style="color: #808080">  4</span>      <span style="color: #b22222"># Detect missing $</span>
+<span style="color: #808080">  5</span>      set cepa bepa
+<span style="color: #808080">  6</span>      <span style="color: #b22222"># Detect unknown or misspelled variable</span>
+<span style="color: #808080">  7</span>      set depa $cep
+<span style="color: #808080">  8</span>      set epa
+<span style="color: #808080">  9</span>      <span style="color: #b22222"># Detect bad $</span>
+<span style="color: #808080"> 10</span>      set $depa apa
+<span style="color: #808080"> 11</span>      if {[info exists $cepa]} {
+<span style="color: #808080"> 12</span>          <span style="color: #b22222"># Detect wrong number of args</span>
+<span style="color: #808080"> 13</span>          set apa bepa cepa
+<span style="color: #808080"> 14</span>      }
+<span style="color: #808080"> 15</span>      <span style="color: #b22222"># Detect ugly if</span>
+<span style="color: #808080"> 16</span>      if {$bepa == $cepa} {
+<span style="color: #808080"> 17</span>          set hej 1
+<span style="color: #808080"> 18</span>      } elsif {$bepa == $cepa} {
+<span style="color: #808080"> 19</span>          set hej 2
+<span style="color: #808080"> 20</span>      } else {
+<span style="color: #808080"> 21</span>          set hej 3
+<span style="color: #808080"> 22</span>      }
+<span style="color: #808080"> 23</span>      <span style="color: #b22222"># Detect bad subcommand</span>
+<span style="color: #808080"> 24</span>      info gurka
+<span style="color: #808080"> 25</span>  
+<span style="color: #808080"> 26</span>      <span style="color: #b22222"># Detect bad switch comment</span>
+<span style="color: #808080"> 27</span>      switch $bepa {
+<span style="color: #808080"> 28</span>          hej {
+<span style="color: #808080"> 29</span>              set hej hopp
+<span style="color: #808080"> 30</span>          }
+<span style="color: #808080"> 31</span>          <span style="color: #b22222"># This is bad</span>
+<span style="color: #808080"> 32</span>          hopp {
+<span style="color: #808080"> 33</span>              <span style="color: #b22222"># Detect a missing command</span>
+<span style="color: #808080"> 34</span>              miffo
+<span style="color: #808080"> 35</span>          }
+<span style="color: #808080"> 36</span>      }
+<span style="color: #808080"> 37</span>  }
+<span style="color: #808080"> 38</span>  
+<span style="color: #808080"> 39</span>  <span style="color: #b22222"># Test call-by-name handling</span>
+<span style="color: #808080"> 40</span>  <span style="color: #b22222"># The syntax of this proc is described in</span>
+<span style="color: #808080"> 41</span>  <span style="color: #b22222"># the file test.syntax</span>
+<span style="color: #808080"> 42</span>  proc copy {srcName dstName} {
+<span style="color: #808080"> 43</span>      upvar $srcName src $dstName dst
+<span style="color: #808080"> 44</span>      set dst $src
+<span style="color: #808080"> 45</span>  }
+<span style="color: #808080"> 46</span>  
+<span style="color: #808080"> 47</span>  proc testCopy {} {
+<span style="color: #808080"> 48</span>      set apa 1
+<span style="color: #808080"> 49</span>      <span style="color: #b22222"># It should not warn about apa below</span>
+<span style="color: #808080"> 50</span>      copy apa bepa
+<span style="color: #808080"> 51</span>      <span style="color: #b22222"># Bepa should be known now</span>
+<span style="color: #808080"> 52</span>      set cepa $bepa
+<span style="color: #808080"> 53</span>  
+<span style="color: #808080"> 54</span>      <span style="color: #b22222"># Detect $ mistake</span>
+<span style="color: #808080"> 55</span>      copy apa $bepa
+<span style="color: #808080"> 56</span>      copy $apa bepa
+<span style="color: #808080"> 57</span>  }
+<span style="color: #808080"> 58</span>  
+<span style="color: #808080"> 59</span>  proc bepa {} {
+<span style="color: #808080"> 60</span>      <span style="color: #b22222"># Missing quote</span>
+<span style="color: #808080"> 61</span>      set apa "hej hopp
+<span style="color: #808080"> 62</span>  }
+<span style="color: #808080"> 63</span>  <span style="color: #b22222"># A quote just to fix syntax coloring "</span>
+<span style="color: #808080"> 64</span>  
+<span style="color: #808080"> 65</span>  proc cepa {} {
+<span style="color: #808080"> 66</span>      <span style="color: #b22222"># Missing bracket</span>
+<span style="color: #808080"> 67</span>      set apa [hej hopp
+<span style="color: #808080"> 68</span>  }
+<span style="color: #808080"> 69</span>  
+<span style="color: #808080"> 70</span>  proc epa {} {
+<span style="color: #808080"> 71</span>      <span style="color: #b22222"># Extra close brace</span>
+<span style="color: #808080"> 72</span>      if {[string length apa}} {
+<span style="color: #808080"> 73</span>          set bepa 1
+<span style="color: #808080"> 74</span>      }
+<span style="color: #808080"> 75</span>  }
+<span style="color: #808080"> 76</span>  
+<span style="color: #808080"> 77</span>  proc fepa {} {
+<span style="color: #808080"> 78</span>      <span style="color: #b22222"># Commented brace {</span>
+<span style="color: #808080"> 79</span>      if {[string length apa]} {
+<span style="color: #808080"> 80</span>          set bepa 1
+<span style="color: #808080"> 81</span>      }
+<span style="color: #808080"> 82</span>  }
+<span style="color: #808080"> 83</span>  }
+<span style="color: #808080"> 84</span>  
+<span style="color: #808080"> 85</span>  <span style="color: #b22222"># This should be last in the file, since</span>
+<span style="color: #808080"> 86</span>  <span style="color: #b22222"># the missing close brace disturbs anything</span>
+<span style="color: #808080"> 87</span>  <span style="color: #b22222"># after it</span>
+<span style="color: #808080"> 88</span>  proc depa {} {
+<span style="color: #808080"> 89</span>      <span style="color: #b22222"># Missing close brace</span>
+<span style="color: #808080"> 90</span>      if {[string length apa] {
+<span style="color: #808080"> 91</span>          set bepa 1
+<span style="color: #808080"> 92</span>      }
+<span style="color: #808080"> 93</span>  }
+</pre></td>
+<td style="vertical-align: top; white-space: nowrap;"><pre>
+Parsing file test.syntax
+Checking file test.tcl
+
+
+Line   5: W Found constant "bepa" which is also a variable.
+
+Line   7: E Unknown variable "cep"
+Line   8: E Unknown variable "epa"
+
+Line  10: N Suspicious variable name "$depa"
+Line  11: N Suspicious variable name "$cepa"
+
+Line  13: E Wrong number of arguments (3) to "set"
+Line  13: W Found constant "bepa" which is also a variable.
+Line  13: W Found constant "cepa" which is also a variable.
+
+
+Line  18: E Badly formed if statement
+            Found argument 'elsif' where else/elseif was expected.
+
+
+
+
+Line  24: E Unknown subcommand "gurka" to "info"
+
+
+
+
+
+
+Line  31: W Switch pattern starting with #. This could be a bad comment.
+Line  31: W Unknown command "This"
+Line  31: W Unknown command "bad"
+Line  34: W Unknown command "miffo"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Line  55: N Suspicious variable name "$bepa"
+Line  56: N Suspicious variable name "$apa"
+
+
+
+
+Line  61: E Could not complete statement.
+            One double quote would complete the first line
+            One double quote would complete the script body at line 62.
+
+
+
+Line  67: E Could not complete statement.
+            One close bracket would complete the first line
+            One close bracket would complete the script body at line 68.
+Line  70: E Wrong number of arguments (4) to "proc"
+            Argument 4 at line 72
+Line  72: E Wrong number of arguments (1) to "if"
+
+Line  74: N Close brace not aligned with line 70 (0 4)
+Line  75: E Unbalanced close brace found
+
+
+
+
+
+
+Line  82: E Unbalanced close brace found
+            Unbalanced brace in comment in line 78.
+
+
+
+
+Line  88: E Could not complete statement.
+            One close brace would complete the first line
+            One close brace would complete at end of line 93.
+            One close brace would complete the script body at line 94.
+            Assuming completeness for further processing.
+Line  90: E Wrong number of arguments (1) to "if"
+Line  93: N Close brace not aligned with line 90 (4 0)
+</pre></td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

@@ -1,0 +1,67 @@
+Nagelfar's syntax descriptions for a command consists of little language
+describing the arguments to the command.
+           
+An entry must be a valid list of tokens as described below.
+
+Check the syntax database (syntaxdb.tcl) or in the database browser in the
+gui for examples.
+
+<ul>Tokens</ul>
+   
+x Anything, the argument is not checked
+o Option, i.e anything starting with -
+p Option+Any (p as in option Pair)
+s Subcommand
+e Expression
+E Expression that should be in braces
+
+d Definition. That arg defines a new command.
+  If followed by =cmd, it copies syntax from cmd.
+
+c  Code, checked in surrounding context
+cg Code, checked in global context
+cn Code, checked in a virtual namespace
+cl Code, checked in its own local context
+cv Code, checked in its own local context, preceded by variable list
+
+n, v and l all marks variable names.  Those arguments will not be
+  checked against known variables to detect missing $.
+n The variable does not have to exist, and is set by the command.
+v The variable must exist.  It is not marked as set.
+l Does not have to exist.  It will be marked as known, but not set.
+
+If a token is an integer, just check the number of arguments against
+it.  This is equivalent to that many "x"es.
+
+r min ?max?  Specify a range for number of arguments
+
+<ul>Modifiers</ul>
+
+These apply to some of the tokens.
+
+? Zero or One
+* Zero or more
+. One or nothing at all
+
+* after x swallows all the rest and must be last
+s may only have .
+e and c may not have any modifier
+
+<ul>Subcommands</ul>
+
+For commands that have subcommands (as indicated by token "s"),
+separate descriptions can be set up for each subcommand.
+If a syntax for a subcommand is defined, it is used to check the rest.
+
+##nagelfar syntax string             s x x*
+##nagelfar syntax string\\ bytelength 1
+##nagelfar syntax string\\ compare    o* x x
+
+<ul>Different syntax for different number of arguments</ul>
+
+If the first token ends with : it means that there are different syntax
+descriptions for different number of arguments.  Any token ending
+with : starts a syntax for the number of arguments that the number
+preceding it says. A lone : starts the default syntax.
+
+Example: "1: x 2: n n : e x*"

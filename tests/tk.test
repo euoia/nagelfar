@@ -1,0 +1,48 @@
+#------------------------------------------------------------*- tcl -*-
+# Tests for Tk checking
+#----------------------------------------------------------------------
+# $Revision$
+#----------------------------------------------------------------------
+
+test tk-1.1 {
+    Tk, options
+} -body {
+    createTestFile {
+        entry .e -textvariable apa -width 22
+        entry .f -gurkmeja 2
+    }
+    execTestFile
+} -result {%%Line   3: E Bad option -gurkmeja to "entry"}
+
+test tk-2.1 {
+    Tk, option types
+} -body {
+    createTestFile {
+        set bepa hej
+        set cepa hopp
+        set apa [entry .e -textvariable bepa]
+        $apa configure -textvariable cepa
+    }
+    execTestFile
+} -result {%%}
+
+test tk-3.1 {
+    Tk, misc commands, checking syntax db
+} -body {
+    createTestFile {
+        tkwait variable apa
+        tkwait visibility .
+        tkwait window .
+    }
+    execTestFile
+} -result {%%}
+
+test tk-4.1 {
+    Tk, bind command
+} -body {
+    createTestFile {
+        bind .t <Enter> {set x y}
+        bind .t <Enter> {+set x $y}
+    }
+    execTestFile
+} -result {%%Line   3: E Unknown variable "y"}

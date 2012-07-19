@@ -1,0 +1,218 @@
+Syntaxflagga för "globalt variabelnamn" (-variable).
+Skippa "Suspiscious variable name" för dessa.
+
+Alt. hantera typen "variable". (fixat, "varName")
+
+Borde inte 2pass se upvar i procedurerna?
+
+Detektera att detta inte är en misstänkt variabel?
+    if {![info exists ${type}::Snit_info]} {
+
+Detta är ok, åtminstonde ska Snit_info kännas igen.
+    variable ${type}::Snit_info
+
+Detta fås ofta fel, kanske ha en flagga för att ta bort den?
+snit.tcl: Line 1825: N Suspicious # char. Possibly a bad comment.
+
+Kanske kunna sätta kommando-rads-options i ##nagelfar ?
+Så att .syntax-filen kan anpassa till filen.  Kräver
+option-stack för att inte påverka andra filer?
+
+Save report, menu.
+
+gitk: Line 432: W Unknown command "tk_optionMenu"
+##nagelfar syntax tk_optionMenu x n x x*
+
+-----------------------------------------------------------------------------
+Static call graph.
+Samla all info om vem som anropar vad.
+Sammanställ i graf.
+gwlester efterlyste något sånt.
+-----------------------------------------------------------------------------
+Från Uwe:
+
+FEATURE
+o use ctext to hightlight the tcl source code
+   for this purpose I have made a syntax definition file for tcl
+   ctext is the original version vom tklib CVS
+Slow and ugly, maybe fixable.
+Currently, automatically uses ctext if available but do not provide it.
+
+o only save a file if it has been edited
+
+-----------------------------------------------------------------------------
+From Andreas Leitgeb:
+
+GUI: 
+  - delete(FromList)-button for candidate file-list.
+     (yes, I saw that typing <Del> does it, but still :-)
+(done)
+  - a "find string"-dialog for the internal editor.
+(done)
+  - add  gvim (or xterm -exec vi) to choice of editors
+(done)
+  - different color for "Checking file ..." and "Done" 
+       than "myfile.tcl: Line ..."-lines
+(done)
+  - a "Goto next `E'"-button.
+(done)
+  - Help->README (BUGS-section at bottom)
+      The example misses the point, because likely some
+      \<nl> got substed. That's a tcl-woe I also fell
+      victim for once, and it's not easy to fix. (I used 
+      \\ in the {string}-assignment, and a regsub on the
+      variable afterwards, to replace \\<nl> with \<nl>)
+      Anyway, I think that the "not"-behaviour suits me
+      better, than the "should"-behaviour:
+        button .foo ... \
+           -foo bar  -command {
+               blah
+        }
+      is ok (imho), not
+           }
+      but thats probably up to personal taste.
+(done)
+
+the Checker:
+  - allow setting user's tab-size (in our sources it's often 2 or 4)
+        (relevant for "Close brace not aligned with ...")
+(done)
+  - some special style casually used here, and complained about:
+     if {[catch {
+        some script code
+     } msg]}  ...
+     
+(I see no complaint when doing that)
+
+-----------------------------------------------------------------------------
+
+Additional from Andreas Leitgeb:
+
+> I just finished my vacation 
+Just like me one week later :-)
+
+> >  - add  gvim (or xterm -exec vi) to choice of editors
+> Ok. Does gvim has something similar to "emacsclient" so
+> that you can reuse a previously started editor, e.g. if
+> you click on an other error?
+
+gvim --remote  +<initial lineNr>  filename.tcl
+
+If no "master" exists at that point, one is created
+automatically (but some "error-message" may be written out).
+
+> >  - different color for "Checking file ..." and "Done" 
+> >       than "myfile.tcl: Line ..."-lines
+> Ok.  Any color suggestion?
+> I guess a lighter shade of gray would be good.
+Actually what I had really in mind (but failed to write)
+was more like this:
+  Errors in some darkish red,
+  Warnings in some darkish yellow/brown or orange.
+  "N"'s again in some other color (steelblue perhaps)
+The colors of course should still have good contrasts 
+to light background.
+
+But just graying out the meta-lines is already a good start :-)
+
+> >  - allow setting user's tab-size (in our sources it's often 2 or 4)
+> >        (relevant for "Close brace not aligned with ...")
+> Ok. Personally I'm in the tabs-in-code-are-evil camp, but that
+> should be an easy thing to fix.
+
+Me, too, but I've got a hard time convincing all my co-workers...
+Even more hard time to justify a commit that just replaces tabs
+with spaces.
+
+> >  - some special style casually used here, and complained about:
+> >     if {[catch {
+> >        some script code
+> >     } msg]}  ...
+> I can't reproduce any complain there.  Do you have a better example?
+
+Damn, I just now (after re-checking) noticed that 
+there was indeed a missing close-bracket in my code, so
+the Error: "E Could not complete statement. ..." was entirely
+correct and not caused by my strange formatting.  Well, just
+forget about it ;-)
+-----------------------------------------------------------------------------
+För detta:
+proc demo {} {
+    if 1 (}
+    return 0
+}
+importantCommand
+
+Nagelfar:
+Line   2: W Unknown command "("
+Line   4: E Close brace first in statement.
+Line   5: W Unknown command "importantCommand"
+
+Frink:
+*** ../../bad.tcl Warning : if condition not braced. in proc demo (line 2)
+*** ../../bad.tcl Warning : return used outside a proc body (line 3)
+*** ../../bad.tcl Warning : statement is unreachable (line 4)
+*** ../../bad.tcl Warning : unmatched } found (line 4)
+
+Kanske ska ta efter något meddelande?
+unmatched bättre än first in statement?  (fixat)
+rapportera return utanför proc body som not?
+
+Kanske ha ett annat "unknown command" om det inte är alfanumeriskt? (fixat)
+Ok, : ' och annat används ofta i kommandon. Rena tecken-kommandon?
+-----------------------------------------------------------------------------
+Testa om värdet till switch är konstant. t.ex. switch {$apa} {xxx}.
+
+Kunna ha t.ex.:
+##nagelfar nocover
+
+Hur hantera tcl::mathfunc i 8.5?
+Separat hantering av expr?
+Kolla expr i safe interp med dummy mathfunc?
+-----------------------------------------------------------------------------
+Lägg till syntax för variabel-lista. För att kunna klara method.
+
+
+   ::itcl::body OUR_GUI::showMessage {a b c} {
+        set x [string range 0 4]
+    }
+En metod att definiera block som är proc-liknande.
+
+proc x {a b} {code}
+method x {a b} {code}
+itcl::body x {a b} {code}
+
+1. Nytt scope
+2. Variablerna måste vara kända.
+
+Detta är exakt som proc.
+
+3. Implicita variabler i snit???
+
+4. Komma ihåg metoden?
+Kanske inte nödvändigt till att börja med.
+Räcker att köra parseproc utan att lagra namn.
+Bryt ut den delen av parseproc som gör 1+2
+till egen del.
+
+5. Syntaxdb för detta?
+En bokstav för "namn arg body"?
+En bokstav för varje?
+Vad säger att det är en proc-klon?
+
+proc parseBodyNewScope {body index ns arguments {implicitvars {}}} {
+    # Initialise a knownVars array with the arguments.
+    array set knownVars {}
+    foreach a [concat $arguments $implicitvars] {
+        set var [lindex $a 0]
+        set knownVars(known,$var) 1
+        set knownVars(local,$var) 1
+        set knownVars(set,$var)   1
+        set knownVars(type,$var)  ""
+    }
+    pushNamespace $ns
+    parseBody $body $index knownVars
+    popNamespace
+    return [array get knownVars]
+}
+-----------------------------------------------------------------------------

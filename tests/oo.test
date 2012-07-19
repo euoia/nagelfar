@@ -1,0 +1,105 @@
+#------------------------------------------------------------*- tcl -*-
+# Tests for objects
+#----------------------------------------------------------------------
+# $Revision: 384 $
+#----------------------------------------------------------------------
+
+test oo-1.1 {
+    Object definition experiment
+} -body {
+    createTestFile {
+        ##nagelfar syntax snit::type x cn
+        ##nagelfar syntax snit::type::method x cv
+        ##nagelfar syntax snit::type::constructor cv
+        ##nagelfar syntax snit::type::destructor cl
+        ##nagelfar syntax snit::type::option x p*
+        ##nagelfar syntax apa x*
+        snit::type apa {
+            option -x -default 10
+            constructor {c d} {
+                puts $c
+            }
+            destructor {
+                list hej
+            }
+            method gugg {a b} {
+                puts $a
+            }
+        }
+        set x [apa %AUTO% -x 5]
+        $x gugg 5 7
+        $x destroy
+    }
+    execTestFile
+} -result {%%} -match glob
+
+test oo-2.1 {
+    tcloo inheritance, checking "next"
+} -constraints runin86 -body {
+    createTestFile {
+        oo::class create Base {
+            variable id
+            constructor {n} {
+                set id $n
+            }
+            method id {} {
+                return $id
+            }
+        }
+        oo::class create Package {
+            superclass Base
+            variable records
+            constructor {n {r {}}} {
+                next $n x
+                set records $r
+            }
+            method id {} {
+                next x
+            }
+        }
+    }
+    execTestFile -s syntaxdb86.tcl
+} -result {%%Line  15: E Wrong number of arguments (2) to "Base new"
+Line  19: E Wrong number of arguments (1) to "_obj,Base id"}
+
+test oo-3.1 {
+    tcloo, my
+} -constraints runin86 -body {
+    createTestFile {
+        oo::class create Base {
+            constructor {n} {
+                my variable id
+                set id $n
+            }
+            method id {} {
+                my variable id
+                return $id
+            }
+            method xx {} {
+                return [my id x]
+            }
+        }
+    }
+    execTestFile -s syntaxdb86.tcl
+} -result {%%Line  12: E Wrong number of arguments (2) to "_obj,Base id"}
+
+test oo-4.1 {
+    tcloo, variable
+} -constraints runin86 -body {
+    createTestFile {
+        oo::class create Base {
+            variable apa bepa cepa
+            constructor {n} {
+                set apa $n
+                set bepa $cepa
+            }
+            method id {} {
+                return $apa
+            }
+            method xx {} {
+                list $cepa $depa
+            }
+        }
+    }
+    execTestFile -s syntaxdb86.tcl
+} -result {%%Line  12: E Unknown variable "depa"}

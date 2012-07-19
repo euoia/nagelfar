@@ -1,0 +1,480 @@
+2012-01-05
+ Recognise "others" in last switch branch as a possible mistake.
+
+Version 1.1.12
+
+2011-11-27
+ Recognise common construct ${ns}::var as non-suspicious.
+
+2011-11-26
+ Made it possible to customize how Nagelfar is installed.
+
+2011-10-15
+ Corrected some trace sub commands in syntax database.
+
+2011-08-09
+ Added checks for array/scalar mixup.
+
+2011-04-19
+ Further processing to diagnose missing brace.
+
+2011-04-17
+ Added -H command line switch.
+
+2010-10-05
+ Support for tcloo's implicit variables
+ Support for tcloo "my" command.
+ Support for tcloo "next" command.
+
+2010-10-04
+ Provide _stdclass_oo in syntaxdb.
+ Handle constructor and superclass in oo.
+
+2010-10-01
+ Do not check proc/method name against variables
+
+2010-09-30
+ Make command line -s search in the list of builtin databases
+
+Version 1.1.11
+
+2010-09-30
+ Added inline keyword for alias
+
+2010-09-25
+ Changed novar to only suppress errors, not suppress tracking, to better
+ support OO, e.g. in instrumenting.
+
+2010-06-03
+ Handle simple string substitution in ##nagelfar copy
+
+2010-05-28
+ Added syntax tokens for proc and method definitions.
+ Make sure commands with definitions get through the first pass.
+ Command "proc" is now handled through the new token. 
+
+2010-05-25
+ Added a syntax token for object definitions.
+
+2010-05-23
+ Added a syntax token for definitions.
+
+2010-05-23
+ Handle implicit variables, to support OO better.
+ Handle if some other namespace defines "proc".
+
+2010-05-18
+ Handle tailcall.
+ Made messages more consistent.
+
+Version 1.1.10
+
+2010-05-16
+ Added more of zlib and tcl::prefix in syntaxbuild.
+ Added more of chan in syntaxbuild.
+
+2010-05-16
+ Corrected output in db browser. Fixed GUI test for db browser.
+
+2010-05-16
+ More OO in syntaxbuild.
+ Handle when a token "s" is not first.
+
+2010-05-12
+ Search down all namespaces for a command.
+ Include all preceeding arguments in a virtual namespace.
+
+2010-05-11
+ Restored token cn behaviour to virtual namespace.
+ Include more oo in 8.6 database.
+
+2010-05-10
+ Added info about more 8.6 commands to syntax db.
+
+2010-05-10
+ Added syntax token cv for variable list+code combination.
+ Added a check for malformed argument list to a proc.
+
+2010-05-10
+ Cleaned up code syntax tokens. Renamed C to cg for global context.
+ Made cn work reasonably. Added tests for cg, cn and cl.
+
+2010-05-09
+ Added inline syntax of "copy", to copy syntax from command to command
+
+2010-05-09
+ Added inline syntax of "subcmd+", to handle adding subcmds.
+
+2010-05-09
+ Handle -- better in some cases.
+ Include msgcat, namespace which, and 8.6 catch in syntaxbuild.
+ Experiment to test TDBC
+
+2009-12-21
+ Note when a newline breaks a command substitution
+
+2009-11-22
+ Added support for partial command tokens
+
+2009-11-22
+ Added html output option.
+
+2009-10-03
+ Added a check for expr calls in expressions.
+
+2009-05-20
+ Handle namespace variables better. [Bug 15644]
+
+2009-05-20
+ Fixed a bug where a command added though inline commend was not
+ fully recognised internally. [Bug 15645]
+
+2009-05-20
+ Added info about some 8.6 commands to syntax db.
+
+2009-02-17
+ Misc improvments from Hans Goetz, including:
+   bug removed in the result window context menu, add filter
+   added new menu item "Save Result" in the result window context menu
+   added option "Disable variable checking" in the options menu
+   added option for editor "PFE" which is a popular freeware editor under WIN
+
+2008-09-23
+ Support initialising incr for 8.5
+ Generate db for 8.6.
+ Make a cmd line exe for Windows when wrapping.
+
+Version 1.1.9
+
+2008-03-14
+ Changed to use 8.5 as default.
+
+2008-03-14
+ Detect Ctrl-Z in scripts, notifying about it.
+
+2008-02-25
+ Added ttk commands to syntaxbuild.
+ Use the selected encoding on instrumented file and markup file.
+ Warn if string argument to switch is constant.
+ Experimental variable coverage
+
+2008-01-27
+ Started on a nocover pragma.
+
+2007-12-09
+ Support initial "+" in bind scripts. [FR 3893]
+
+Version 1.1.8
+
+2007-09-27
+ Added a reset filter option in GUI. [FR 3586]
+ Added break button in GUI. [FR 3412]
+ Removed old {expand} syntax.
+
+2007-06-18
+ Added Del button for Db files. [Bug 11109]
+ Added percentage in coverage output. [FR 3428]
+
+2007-06-13
+ Improved error messages for comments in db files. [Bug 11109]
+ Check if file is being reinstrumented. [FR 3424]
+
+2007-05-17
+ Made code coverage count number of runs instead of just run/notrun. [FR 3415]
+ Fixed a bug in expression checking. [Bug 11091]
+
+2007-03-09
+ Check bind scripts in global context. New token "C".
+ Fixed edit window startup problem.
+
+2007-03-03
+ Filter multiple line messages better in GUI. [Bug 10515]
+ Corrected syntax for time command. [Bug 10496]
+
+Version 1.1.7
+
+2007-02-23
+ Added checks for variable existence in syntaxbuild, to cope with
+ non-standard interpreters.
+
+2007-02-21
+ Added sanity check for proc arguments. [FR 3167]
+ Read .nagelfarrc from current dir first.
+ Corrected bugs in duplicate file check and GUI filter options.
+ Corrected syntax database for lsearch -index. [Bug 10430]
+
+2007-02-03
+ Added -exitcode. [Sup 102383]
+ Added extensions preference. [FR 3102]
+ Detect inline style comments in db file. [FR 2541][FR 2938]
+
+2007-01-04
+ Check for extra quote at end of word. [Bug 9644]
+ Detect extra bracketed commands. [FR 2943]
+ Check for duplicate files in GUI. [Bug 9709]
+ More filter options on GUI. [Bug 9774][Bug 9826]
+ Corrected syntax database for regsub. [Bug 9791]
+ More fconfigure opts in syntax db. [Bug 9607]
+ Added more missing to syntax db.
+
+Version 1.1.6
+
+2006-12-03
+ Remember directories between adding files. [FR 2921]
+ Allow to move files in file list with shift-up/down. [FR 2921]
+ Include 8.5 syntax database in distribution.
+
+2006-11-29
+ Fixed bug remembering global variables. [Bug 9578]
+
+2006-11-23
+ Support {*} syntax.
+ Fixed bug in switch check. [Bug 9147]
+
+2006-11-07
+ Include Tk's auto_loaded commands.
+
+Version 1.1.5
+
+2006-10-15
+ Added proc argument name sanity checks.
+
+2006-08-22
+ Fixed header generation bug. [Bug 8500]
+ Fixed upvar bug. [Bug 8534]
+ Fixed namespace resolution bug. [Bug 8538]
+ Fixed tkwait syntax info.
+ Check namespace eval better. [Bug 8539]
+ Fixed bad close brace alignment warning. [Bug 8537]
+ Recognise FRINK style inline comments. [FR 2540]
+ Allow level in inline filter comments.
+
+Version 1.1.4
+
+2006-07-05
+ Allow embedded usage.
+ Remade a bit to allow nagelfar to be loaded embedded.
+ Support source -encoding when instrumenting 8.5 code.
+ Added more syntax db info, specially for 8.5.
+ Db info for tkwait and serial fconfigure channels.
+
+Version 1.1.3
+
+2006-05-20
+ Support vim as editor.
+ Support different tab settings.
+ See next error button in GUI.
+ Text search in report window.
+ Show less important info in gray.
+ Ideas from Andreas Leitgeb.
+
+2006-05-16
+ Detect missing space after cmd e.g. if{something}
+
+2005-04-03
+ When starting up in wish on windows it is pointless to not run in gui mode.
+ Added possibility to delete files from database list.
+ Added simple File menu.
+ Ideas from Arjen Markus.
+
+2005-02-20
+ Extended handling of if 0 {...} as a comment to handle e.g. { 0 } too.
+ Instrument a missing "else" in code coverage, to get branch coverage.
+
+Version 1.1.2
+
+2005-01-29
+ Added -quiet and -glob. Ideas from Phil Wise.
+ Fixed a bug in -header which did not work in 8.5.
+
+2005-01-14
+ Added -header for header generation. Idea from Yiftach Tzori.
+
+2005-01-12
+ Added the option to use emacs to view files instead of the internal editor.
+ Started to move source code to separate smaller files.
+
+Version 1.1.1
+
+2005-01-01
+ Fixed a bug in instrumenting which prevented instrumenting multiple files.
+ Preserve header and permissions in instrumented file to allow an executable
+ file to remain executable after instrumentation.
+
+Version 1.1
+
+2004-12-21
+ Added instrumenting and markup.
+
+2004-10-??
+ Changes after suggestions from Uwe Koloska:
+ Reapply filter when adding it in GUI.
+ Highlight error in result window when shown in code window.
+ Use ctext if available.
+ Added option to backup file when saving from code window.
+ Added save default options.
+
+2004-09-15
+ Added -strictappend option.
+
+2004-09-10
+ variable and upvar fixes.
+
+Version 1.0.2
+
+2004-09-02
+ Allow [upvar xx xx] construct.
+ Added database browser.
+ Track interp alias "commands".
+
+2004-08-13
+ Empty namespace eval bodies could give silly warnings.
+ Optimised splitScript.
+
+2004-07-16
+ Fixed a bug when checking shortened options.
+ Array variabled did not track types correctly.
+ Parse namespace eval in first pass to get a more complete pass.
+ Always do 2-pass analysis.
+ Fixed a bug in resolving procs in namespaces.
+
+Version 1.0.1
+
+2004-06-13
+ Some fixes in the handling of {expand}.
+
+Version 1.0
+
+2004-05-01
+ Added database info in About window.
+ Added docs about inline comments.
+
+2004-04-13
+ Improved types a bit to allow the type 'varName' to indicate a variable name.
+ Added new inline comments to allow controlling of all database fields.
+ All inline comments now starts with ##nagelfar.
+ Improved how upvar #0 is handled.
+
+2004-04-07
+ Fixed a bug in subcommand checking. Subcommands later than first
+ argument did not work.
+ Improved options checking.
+ Added more subcommands and options to syntax database.
+
+2004-03-30
+ Dialog for adding files accepts multiple files.
+
+Version 1.0b3
+
+2004-03-23
+ Fixed a bug in option checking where glob chars disturbed things.
+ Also make sure that option checking is not invoked on args that
+ cannot be options due to their placement.
+
+Version 1.0b2
+
+2004-02-09
+ Comment checking was too sensitive in expressions.
+ Added registry setting on Windows.
+
+2004-02-03
+ A bug made line number 1 behave strangely.
+ Added an -encoding flag to read scripts that are not in system encoding.
+ Handle unreadable files better.
+
+Version 1.0b1
+
+2004-01-29
+ Some cleanup and optimisations. Added more subcommands to syntaxbuild.
+
+2004-01-07
+ Added a check for bad comments in constant lists.
+
+2003-12-20
+ Improved speed by 35%.
+ Added a 2-pass proc checking to improve things when procs are used
+ before they are declarated in a file.
+
+2003-12-16
+ Recognise if 0 {...} as a comment.
+ Inline comment ##variable to tell checker about a variable.
+
+Version 0.9
+
+2003-12-11
+ Check contents of edit window.
+
+2003-11-20
+ Improved upvar handling. Automatically detect call-by-name.
+
+2003-09-24
+ Improved expression checking.
+
+Version 0.8
+
+2003-08-14
+ Bug fixes in option checking and proc redefinition checking.
+ GUI polishing.
+
+Version 0.7
+
+2003-07-23
+ Minor fixes in gui.
+
+2003-07-13
+ Added a progress bar and a context menu in the gui.
+ Added a severity level filter on messages.
+ Fixed a bug where the script's own procs were not checked properly.
+
+2003-07-09
+ Made syntax database handle more info about options.
+ Some GUI polish.
+ Nagelfar requires Tcl 8.4.
+ Added support for tclkit. Removed FreeWrap support.
+
+Version 0.6
+
+2003-07-08
+ Changed name of application to 'Nagelfar'
+
+2003-07-08
+ Added -filter option to suppress messages.
+ Changed how unbalanced braces in comments are reported.
+
+Version 0.5
+
+2003-02-14
+ Made it possible to use TkDnd when Freewrapped.
+
+2003-02-09
+ Support for Freewrap 5.5.
+ Polished GUI and code. Now it can check itself without warnings.
+
+Version 0.4
+
+2002-11-14
+ Added option to skip variable check.
+ Added option to enforce 'else' keyword.
+ Check ambiguity in shortened subcommands.
+ Improved some messages.
+
+Version 0.3
+
+2002-09-01
+ Added namespace awareness for procs.
+
+2002-08-29
+ Added support in syntax database for expressing different
+ definitions for different number of arguments.
+
+ Added support to mix options that are followed by a value and
+ options that don't.
+
+ Detect shortened options, just like shortened subcommands.
+
+ Separate checks for expressions that need braces and those who don't.
+ Those who need it are always checked regardless of the check-braced-expr
+ option.
+
+
+Started on this file after v0.2

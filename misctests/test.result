@@ -1,0 +1,39 @@
+Parsing file test.syntax
+Checking file test.tcl
+Line   5: W Found constant "bepa" which is also a variable.
+Line   7: E Unknown variable "cep"
+Line   8: E Unknown variable "epa"
+Line  10: N Suspicious variable name "$depa"
+Line  11: N Suspicious variable name "$cepa"
+Line  13: E Wrong number of arguments (3) to "set"
+Line  13: W Found constant "bepa" which is also a variable.
+Line  13: W Found constant "cepa" which is also a variable.
+Line  18: E Badly formed if statement
+            Found argument 'elsif' where else/elseif was expected.
+Line  24: E Unknown subcommand "gurka" to "info"
+Line  31: W Switch pattern starting with #. This could be a bad comment.
+Line  31: W Unknown command "This"
+Line  31: W Unknown command "bad"
+Line  34: W Unknown command "miffo"
+Line  55: N Suspicious variable name "$bepa"
+Line  56: N Suspicious variable name "$apa"
+Line  61: E Could not complete statement.
+            One double quote would complete the first line
+            One double quote would complete the script body at line 62.
+Line  67: E Could not complete statement.
+            One close bracket would complete the first line
+            One close bracket would complete the script body at line 68.
+Line  70: E Wrong number of arguments (4) to "proc"
+            Argument 4 at line 72
+Line  72: E Wrong number of arguments (1) to "if"
+Line  74: N Close brace not aligned with line 70 (0 4)
+Line  75: E Unbalanced close brace found
+Line  82: E Unbalanced close brace found
+            Unbalanced brace in comment in line 78.
+Line  88: E Could not complete statement.
+            One close brace would complete the first line
+            One close brace would complete at end of line 93.
+            One close brace would complete the script body at line 94.
+            Assuming completeness for further processing.
+Line  90: E Wrong number of arguments (1) to "if"
+Line  93: N Close brace not aligned with line 90 (4 0)

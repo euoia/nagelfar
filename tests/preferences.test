@@ -1,0 +1,200 @@
+#------------------------------------------------------------*- tcl -*-
+# Tests for Nagelfar's preferences
+#----------------------------------------------------------------------
+# $Revision$
+#----------------------------------------------------------------------
+
+test preferences-1.1 {
+    Command line flags, -strictappend
+} -body {
+    createTestFile {
+        set apa bepa
+        lappend apa hej hopp
+        lappend cepa hej hopp
+    }
+    set res [execTestFile]
+    append res [execTestFile -flags -strictappend]
+} -result {%%%%Line   4: E Unknown variable "cepa"}
+
+test preferences-1.2 {
+    Command line flags, -strictappend
+} -body {
+    createTestFile {
+        set apa bepa
+        append apa hej hopp
+        append cepa hej hopp
+    }
+    set res [execTestFile]
+    append res [execTestFile -flags -strictappend]
+} -result {%%%%Line   4: E Unknown variable "cepa"}
+
+test preferences-2.1 {
+    Command line flags, -tab
+} -body {
+    createTestFile "
+        if {1} {
+            set bepa apa
+        }
+    "
+    set res [list [execTestFile -tab a]]
+    lappend res [execTestFile -tab 1]
+    lappend res [execTestFile -tab 21]
+} -result {{Bad tab value 'a'} {Bad tab value '1'} {Bad tab value '21'}}
+
+test preferences-2.2 {
+    Command line flags, -tab
+} -body {
+    createTestFile "
+        \tif {1} {
+            set bepa apa
+        \t}
+    "
+    set res [list [execTestFile -tab 2]]
+    lappend res [execTestFile -tab 4]
+} -result {%% %%}
+
+test preferences-2.3 {
+    Command line flags, -tab
+} -body {
+    createTestFile "
+        \tif {1} {
+            set bepa apa
+          }
+    "
+    set res [list [execTestFile -tab 2]]
+    lappend res [execTestFile -tab 4]
+} -result {%% {%%Line   4: N Close brace not aligned with line 2 (12 10)}}
+
+test preferences-2.4 {
+    Command line flags, -tab
+} -body {
+    createTestFile "
+\t\t\tif {1} {
+            set bepa apa
+\t\t   \t}
+    "
+    set res [list [execTestFile -tab 2]]
+    lappend res [execTestFile -tab 4]
+    lappend res [execTestFile -tab 8]
+} -result {{%%Line   4: N Close brace not aligned with line 2 (6 8)} %% %%}
+
+test preferences-3.1 {
+    Command line flags, -exitcode
+} -body {
+    createTestFile {
+        set apa bepa cepa
+    }
+    set res [execTestFile -flags -exitcode]
+} -returnCodes 2 -result {%%Line   2: E Wrong number of arguments (3) to "set"}
+
+test preferences-3.2 {
+    Command line flags, -exitcode
+} -body {
+    createTestFile {
+        set bepa x
+        set apa bepa
+    }
+    set res [execTestFile -flags -exitcode]
+} -returnCodes 1 -result {%%Line   3: W Found constant "bepa" which is also a variable.}
+
+test preferences-3.3 {
+    Command line flags, -exitcode
+} -body {
+    createTestFile {
+        set apa bepa
+    }
+    set res [execTestFile -flags -exitcode]
+} -result {%%}
+
+test preferences-4.1 {
+    Command line flags, -WelseN
+} -body {
+    createTestFile {
+        if {[list]} {
+            set apa bepa
+        } {
+            set apa bepa
+        }
+    }
+    set res [execTestFile -flags -Welse0]
+    append res [execTestFile -flags -Welse1]
+} -result {%%%%Line   4: E Badly formed if statement*} -match glob
+
+test preferences-4.2 {
+    Command line flags, -WelseN
+} -body {
+    createTestFile {
+        if {[list]} {
+            set apa bepa
+        } {
+            set apa bepa
+        }
+    }
+    set ch [open .nagelfarrc w]
+    puts $ch "set ::Prefs(forceElse) 0"
+    close $ch
+    set res [execTestFile]
+    append res [execTestFile -flags -Welse1]
+    file delete .nagelfarrc
+    set res
+} -result {%%%%Line   4: E Badly formed if statement*} -match glob
+
+test preferences-4.3 {
+    Command line flags, -WelseN
+} -body {
+    createTestFile {
+        if {[list]} {
+            set apa bepa
+        } {
+            set apa bepa
+        }
+    }
+    set ch [open .nagelfarrc w]
+    puts $ch "set ::Prefs(forceElse) 1"
+    close $ch
+    set res [execTestFile]
+    append res [execTestFile -flags -Welse0]
+    file delete .nagelfarrc
+    set res
+} -result {%%Line   4: E Badly formed if statement*%%} -match glob
+
+test preferences-5.1 {
+    Command line flags, -WsubN
+} -body {
+    createTestFile {
+        info exist apa
+    }
+    set res [execTestFile -flags -Wsub0]
+    append res [execTestFile -flags -Wsub1]
+} -result {%%%%Line   2: W Shortened*} -match glob
+
+test preferences-6.1 {
+    Command line flags, -severity
+} -body {
+    createTestFile {
+        info exist apa
+    }
+    set res [execTestFile -flags "-severity E"]
+    append res [execTestFile -flags "-severity W"]
+} -result {%%%%Line   2: W Shortened*} -match glob
+
+test preferences-6.2 {
+    Command line flags, -severity
+} -body {
+    createTestFile {
+        set apa {
+         }
+    }
+    set res [execTestFile -flags "-severity X"]
+    append res [execTestFile -flags "-severity N"]
+    append res [execTestFile -flags "-severity W"]
+} -result {Bad severity level 'X', should be E/W/N.%%Line   3: N Close brace*%%} -match glob
+
+test preferences-7.1 {
+    Command line flags, -H
+} -body {
+    createTestFile {
+        info exist apa
+    }
+    set res [execTestFile -flags "-H"]
+} -result {%%_testfile_: 2: W Shortened*} -match glob

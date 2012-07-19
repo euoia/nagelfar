@@ -1,0 +1,475 @@
+#------------------------------------------------------------*- tcl -*-
+# Tests for syntax database tokens
+#----------------------------------------------------------------------
+# $Revision$
+#----------------------------------------------------------------------
+
+test tokens-1.1 {
+    Modifier ?
+} -body {
+    createTestFile {
+        set apa x
+        ##nagelfar syntax gurka o? x?
+        ##nagelfar option gurka -flag -wiggle
+        gurka
+        gurka hej
+        gurka $apa
+        gurka -flag hopp
+    }
+    execTestFile
+} -result {%%}
+
+test tokens-1.2 {
+    Modifier ?
+} -body {
+    createTestFile {
+        ##nagelfar syntax gurka o? x
+        ##nagelfar option gurka -flag -wiggle
+        gurka -flag -wiggle hopp
+    }
+    execTestFile
+} -result {%%Line   4: E Wrong number of arguments (3) to "gurka"}
+
+test tokens-2.1 {
+    Token p*
+} -body {
+    createTestFile {
+        ##nagelfar syntax gurka p*
+        ##nagelfar option gurka -flag -miffo
+        gurka
+        gurka -flag 1
+        gurka -miffo 0 -flag hejsan
+        # FIXA?
+        # This should preferably give a bad option rather than wrong # args.
+        gurka -miffo 1 hejsan
+    }
+    execTestFile
+} -result {%%Line   9: E Wrong number of arguments (3) to "gurka"}
+
+test tokens-2.2 {
+    Token p* and --
+} -body {
+    createTestFile {
+        ##nagelfar syntax gurka p* x
+        ##nagelfar option gurka -- -flag -miffo
+        gurka x
+        gurka -- x
+        gurka -flag 1 x
+        gurka -flag 1 -- x
+        gurka -miffo 1 --
+        gurka -miffu 1 x
+    }
+    execTestFile
+} -result {%%Line   9: E Bad option -miffu to "gurka"}
+
+test tokens-2.3 {
+    Token p* and --
+} -body {
+    createTestFile {
+        ##nagelfar syntax gurka p*
+        ##nagelfar option gurka -- -flag -miffo
+        gurka
+        gurka --
+        gurka -flag 1
+        gurka -flag 1 --
+        gurka -miffo 1 --
+        gurka -miffu 1
+    }
+    execTestFile
+} -result {%%Line   9: E Bad option -miffu to "gurka"}
+
+test tokens-2.4 {
+    Token p* and --
+} -body {
+    createTestFile {
+        ##nagelfar subcmd+ string gurka
+        ##nagelfar syntax string\ gurka p*
+        ##nagelfar option string\ gurka -- -flag -miffo
+        string gurka
+        string gurka --
+        string gurka -flag 1
+        string gurka -flag 1 --
+        string gurka -miffo 1 --
+        string gurka -miffu 1
+    }
+    execTestFile
+} -result {%%Line  10: E Bad option -miffu to "string gurka"}
+
+test tokens-3.1 {
+    Modifier .
+} -body {
+    # Test that comparison with previous syntax works
+    createTestFile {
+        ##nagelfar syntax apa n x x. x.
+        proc apa {mName arg1 {arg2 0} {arg3 0}} {
+            upvar $mName m
+            
+            set m 1
+        }
+    }
+    execTestFile
+} -result {%%}
+
+test tokens-4.1 {
+    Token error
+} -body {
+    createTestFile {
+        ##nagelfar syntax gurka y*
+        gurka x
+    }
+    execTestFile
+} -result {%%Unsupported token "y*" in syntax for "gurka"*} -match glob
+
+test tokens-4.2 {
+    Token error
+} -body {
+    createTestFile {
+        ##nagelfar syntax gurka 1:
+        gurka x
+    }
+    execTestFile
+} -result {%%Can't parse syntax definition for "gurka": "1:"}
+
+test tokens-5.1 {
+   Range tokens
+} -body {
+    createTestFile {
+        ##nagelfar syntax gurka r 1 2
+        gurka
+        gurka hej
+        gurka hej hopp
+        gurka hej hopp apa
+    }
+    execTestFile
+} -result {%%Line   3: E Wrong number of arguments (0) to "gurka"
+Line   6: E Wrong number of arguments (3) to "gurka"}
+
+test tokens-6.1 {
+    Expression token
+} -body {
+    createTestFile {
+        set apa 1
+        ##nagelfar syntax gurka x e? e E
+        gurka hej {$apa} {$apa} {$apa}
+        ##nagelfar syntax hopp x e e E
+        hopp hej {$apa} {$apa} $apa
+        hopp hej {$apa} $apa {$apa}
+    }
+    execTestFile -flags -Wexpr0
+} -result {%%Modifier "?" is not supported for "e" in syntax for gurka.
+Line   6: W No braces around expression in hopp statement.}
+
+test tokens-6.2 {
+    Expression token
+} -body {
+    createTestFile {
+        set apa 1
+        ##nagelfar syntax hopp x e 
+        hopp hej {$apa}
+        hopp hej $apa
+    }
+    execTestFile -flags -Wexpr2
+} -result {%%Line   5: W No braces around expression in hopp statement.}
+
+test tokens-7.1 {
+    Code token
+} -body {
+    createTestFile {
+        set apa 1
+        ##nagelfar syntax gurka x c* c
+        gurka hej {list $apa} [list hej hopp]
+        ##nagelfar syntax hopp x c? c
+        hopp hej $apa {list $apa}
+    }
+    execTestFile
+} -result {%%Modifier "*" is not supported for "c" in syntax for gurka.
+Line   6: W No braces around code in hopp statement.}
+
+test tokens-7.2 {
+    Code token, partial commands
+} -body {
+    createTestFile {
+        # Test eggdrop bind style
+        ##nagelfar syntax bind s x x c
+        ##nagelfar subcmd bind load link sent
+        ##nagelfar syntax bind\ load x x c1
+        ##nagelfar syntax bind\ link x x c2
+        ##nagelfar syntax bind\ sent x x c3
+        bind load _ _ {llength}
+        bind link _ _ {string index}
+        bind sent _ _ {lrange}
+        bind link _ _ {llength a;#}
+        bind link _ _ {llength}
+    }
+    execTestFile
+    # Known bug: Prefix errors give bad extra info
+} -result {%%Line  12: E Wrong number of arguments (2) to "llength"
+            Argument 2 at line 14}
+
+test tokens-7.3 {
+    Code token, partial commands
+} -body {
+    createTestFile {
+        trace add variable ::x write "llength x ;#"
+        trace add variable ::x write "lrange"
+        trace add execution _ enter "string index"
+        trace add execution _ leave "string replace"
+        trace add command   _ _ "lrange"
+
+        trace add execution _ enter "lrange"
+        trace add execution _ leave "lrange"
+        trace add command   _ _ "string index"
+        trace add variable  ::x _ "string index"
+    }
+    execTestFile
+    # Known bug: Prefix errors give bad extra info
+} -result {%%Line   8: E Wrong number of arguments (2) to "lrange"
+            Argument 2 at line 9
+Line   9: E Wrong number of arguments (4) to "lrange"
+            Argument 2 at line 10
+            Argument 3 at line 10
+            Argument 4 at line 10
+Line  10: E Wrong number of arguments (4) to "string index"
+            Argument 3 at line 11
+            Argument 4 at line 11
+Line  11: E Wrong number of arguments (4) to "string index"
+            Argument 3 at line 13
+            Argument 4 at line 12}
+
+test tokens-7.4 {
+    Code token, global context
+} -body {
+    createTestFile {
+        set apa 1
+        ##nagelfar syntax gurka x cg
+        gurka hej {list $apa ; set bepa 1}
+        set bepa
+    }
+    execTestFile
+} -result {%%Line   4: E Unknown variable "apa"
+Line   5: E Unknown variable "bepa"}
+
+test tokens-7.5 {
+    Code token, namespace context
+} -body {
+    createTestFile {
+        proc ns::gurka::meee {x} {
+            list a
+        }
+        ##nagelfar syntax ns::gurka x cn
+        ns::gurka hej {meee x y}
+    }
+    execTestFile
+} -result {%%Line   6: E Wrong number of arguments (2) to "ns::gurka::meee"}
+
+test tokens-7.6 {
+    Code token, local context
+} -body {
+    createTestFile {
+        set apa 1
+        ##nagelfar syntax gurka x cl
+        gurka hej {list $apa ; set bepa 1}
+        set bepa
+    }
+    execTestFile
+} -result {%%Line   4: E Unknown variable "apa"
+Line   5: E Unknown variable "bepa"}
+
+test tokens-7.7 {
+    Code token, local context+var
+} -body {
+    createTestFile {
+        set apa 1
+        ##nagelfar syntax gurka x cv
+        gurka hej {x y} {
+            list $apa $x $y
+            set bepa 1
+            set cepa 1
+        }
+        set bepa
+    }
+    execTestFile
+} -result {%%Line   5: E Unknown variable "apa"
+Line   9: E Unknown variable "bepa"}
+
+test tokens-7.8 {
+    Code token, local context+var
+} -body {
+    createTestFile {
+        ##nagelfar syntax gurka x cv
+        gurka hej {x {}y} {
+        }
+    }
+    execTestFile
+} -result {%%Line   3: E Argument list is not a valid list}
+
+test tokens-7.9 {
+    Code token, global context, optional
+} -body {
+    createTestFile {
+        set apa 1
+        ##nagelfar syntax gurka x cg?
+        gurka hej {list $apa ; set bepa 1}
+        gurka hej [list myCmd $apa]
+        gurka hej
+    }
+    execTestFile
+} -result {%%Line   4: E Unknown variable "apa"}
+
+test tokens-8.1 {
+    Subcommand token
+} -body {
+    createTestFile {
+        set apa 1
+        ##nagelfar syntax gurka x s?
+        gurka hej [list hej hopp]
+        ##nagelfar syntax hopp x s
+        ##nagelfar subcmd hopp qwerty hipp happ hopp
+        hopp hej qwe
+    }
+    execTestFile
+} -result {%%Modifier "?" is not supported for "s" in syntax for gurka.
+Line   4: N Non static subcommand to "gurka"
+Line   7: W Shortened subcommand for "hopp", qwe -> qwerty}
+
+test tokens-8.2 {
+    Subcommand token, when not first
+} -body {
+    createTestFile {
+        ##nagelfar syntax hopp x s x*
+        ##nagelfar subcmd hopp qwerty hipp happ hopp
+        ##nagelfar syntax hopp\ qwerty x x
+        hopp hej qwerty arg1 arg2
+        hopp hej qwerty arg1 arg2 arg3
+    }
+    execTestFile
+} -result {%%Line   6: E Wrong number of arguments (5) to "hopp qwerty"}
+
+test tokens-9.1 {
+    Optional tokens
+} -body {
+    createTestFile {
+        # Here, -apa cannot be an option
+        string match -apa gurka
+        string equal -nocase -apa gurka
+
+        ##nagelfar syntax hojj p* x x
+        ##nagelfar option hojj -apa -bepa
+        hojj -apa x -cepa y
+
+        # The * should not eat the last arg
+        ##nagelfar syntax myset n* x
+        set apa 1
+        myset hej hopp $apa
+        list $hej $hopp
+    }
+    execTestFile
+} -result {%%}
+
+test tokens-10.1 {
+    Definition of command token
+} -body {
+    createTestFile {
+        ##nagelfar syntax gurka dc
+        gurka hej
+        hej hopp
+        ##nagelfar syntax gurka2 dc=lrange
+        gurka2 mylrange
+        mylrange a 0
+        mylrange a 0 1
+    }
+    execTestFile
+} -result {%%Line   7: E Wrong number of arguments (2) to "mylrange"}
+
+test tokens-11.1 {
+    Definition of procedure token
+} -body {
+    createTestFile {
+        ##nagelfar syntax myproc dp
+        set apa x ;# Do not match variables against proc name
+        myproc apa {x y} {
+            list $x $y
+            code here
+        }
+        apa 2
+    }
+    execTestFile
+} -result {%%Line   6: W Unknown command "code"
+Line   8: E Wrong number of arguments (1) to "apa"}
+
+test tokens-12.1 {
+    Definition of method token
+} -body {
+    createTestFile {
+        ##nagelfar syntax apa do cn
+        ##nagelfar syntax apa::method dm
+        ##nagelfar syntax bepa dc=_obj,bepa
+        apa bepa {
+            set cepa x ;# Do not match variables against proc name
+            method cepa {x y} {
+                gurka
+            }
+        }
+
+        bepa obj
+        obj cepa 2
+        obj moo
+        obj ce xx yy
+        cepa a b
+    }
+    execTestFile
+} -result {%%Line   8: W Unknown command "gurka"
+Line  13: E Wrong number of arguments (2) to "obj cepa"
+Line  14: E Unknown subcommand "moo" to "obj"
+Line  15: W Shortened subcommand for "obj", ce -> cepa
+Line  16: W Unknown command "cepa"}
+
+test tokens-13.1 {
+    Definition of method+procedure token
+} -body {
+    createTestFile {
+        ##nagelfar syntax myproc dm
+        ##nagelfar syntax apa do cn
+        ##nagelfar syntax apa::method dmp
+        ##nagelfar syntax bepa dc=_obj,bepa
+        apa bepa {
+            method cepa {x y} {
+                depa 1
+                depa 1 2
+            }
+            method depa {x y} {
+                cepa 1
+                cepa 1 2
+            }
+        }
+
+        bepa obj
+        obj cepa 2
+        obj moo
+        obj ce xx yy
+        cepa a b
+    }
+    execTestFile
+} -result {%%Line   8: E Wrong number of arguments (1) to "apa::bepa::depa"
+Line  12: E Wrong number of arguments (1) to "apa::bepa::cepa"
+Line  18: E Wrong number of arguments (2) to "obj cepa"
+Line  19: E Unknown subcommand "moo" to "obj"
+Line  20: W Shortened subcommand for "obj", ce -> cepa
+Line  21: W Unknown command "cepa"}
+
+test tokens-14.1 {
+    Token o*
+} -body {
+    createTestFile {
+        ##nagelfar syntax gurka o* x x
+        ##nagelfar option gurka -flag -miffo
+        gurka
+        gurka -flag x x
+        gurka -miffo -flag x x
+        # Mandatory options are consumed first.
+        gurka -hurga hejsan
+        # This should error
+        gurka -hurga hejsan hoppsan
+    }
+    execTestFile
+} -result {%%Line  10: E Bad option -hurga to "gurka"}

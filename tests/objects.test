@@ -1,0 +1,42 @@
+#------------------------------------------------------------*- tcl -*-
+# Tests for object tracking
+#----------------------------------------------------------------------
+# $Revision$
+#----------------------------------------------------------------------
+
+test objects-1.1 {
+    Tk, object tracking
+} -body {
+    createTestFile {
+        set apa [frame .f -padx 3 -pady 3]
+        $apa configure -padx 2 -miffo 3
+        $apa gurka hejsan
+    }
+    execTestFile
+} -result {%%Line   3: E Bad option -miffo*Line   4: E Unknown subcommand "gurka"*} -match glob
+
+test objects-2.1 {
+    object declaration
+} -body {
+    createTestFile {
+        proc x {apa} {
+            ##nagelfar variable apa _obj,frame
+            $apa configure -padx 2 -miffo 3
+            $apa gurka hejsan
+        }
+    }
+    execTestFile
+} -result {%%Line   4: E Bad option -miffo*Line   5: E Unknown subcommand "gurka"*} -match glob
+
+test objects-2.2 {
+    object declaration
+} -body {
+    createTestFile {
+        ##nagelfar syntax x x(_obj,frame)
+        proc x {apa} {
+            $apa configure -padx 2 -miffo 3
+            $apa gurka hejsan
+        }
+    }
+    execTestFile
+} -result {%%Line   4: E Bad option -miffo*Line   5: E Unknown subcommand "gurka"*} -match glob

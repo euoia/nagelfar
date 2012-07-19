@@ -1,0 +1,89 @@
+Checking file Err.0.tcl
+Err.0.tcl: Line   2: E Could not complete statement.
+                       One double quote would complete the first line
+Checking file Err.1.tcl
+Err.1.tcl: Line  25: W Unknown command "name"
+Checking file Err.2.tcl
+Err.2.tcl: Line   8: W Procedure "info" does not match previous definition
+                       Previous 's x*'  New '1'
+Err.2.tcl: Line  26: W Unknown command "name"
+Err.2.tcl: Line  42: N Non static subcommand to "info"
+Checking file Err.3.tcl
+Err.3.tcl: Line  26: W Unknown command "name"
+Checking file Err.4.tcl
+Err.4.tcl: Line   3: W Unknown command "name"
+Checking file Err.5.tcl
+Checking file Err.6.tcl
+Err.6.tcl: Line   3: E Unknown variable "noval"
+Err.6.tcl: Line   3: W Expr without braces
+Checking file Err.7.tcl
+Err.7.tcl: Line   4: E Unknown variable "noval"
+Err.7.tcl: Line   4: W Expr without braces
+Checking file Err.8.tcl
+Err.8.tcl: Line  20: N Non constant argument to global: $arrayVar
+Err.8.tcl: Line  22: N Suspicious variable name "$arrayVar"
+Err.8.tcl: Line  24: N Suspicious variable name "$arrayVar"
+Err.8.tcl: Line  25: N Suspicious variable name "$arrayVar"
+Err.8.tcl: Line  27: W Found constant "id" which is also a variable.
+Err.8.tcl: Line  31: N Non constant argument to global: $arrayVar
+Err.8.tcl: Line  34: E Could not complete statement.
+                       One double quote would complete the first line
+                       One double quote would complete the script body at line 36.
+Err.8.tcl: Line  40: W Found constant "array1" which is also a variable.
+Err.8.tcl: Line  41: W Found constant "array1" which is also a variable.
+Checking file Err.9.tcl
+Err.9.tcl: Line   6: E Wrong number of arguments (4) to "open"
+Err.9.tcl: Line   8: E Wrong number of arguments (4) to "puts"
+Checking file Err.10.tcl
+Err.10.tcl: Line  21: N Non constant argument to global: $arrayVar
+Err.10.tcl: Line  25: E Unknown variable "id"
+Err.10.tcl: Line  25: N Suspicious variable name "$arrayVar"
+Err.10.tcl: Line  26: W Unknown command "whoopee"
+Err.10.tcl: Line  27: N Suspicious variable name "$arrayVar"
+Err.10.tcl: Line  30: W Found constant "id" which is also a variable.
+Err.10.tcl: Line  34: N Non constant argument to global: $arrayVar
+Err.10.tcl: Line  37: E Could not complete statement.
+                        One double quote would complete the first line
+                        One double quote would complete the script body at line 39.
+Err.10.tcl: Line  43: W Found constant "array1" which is also a variable.
+Err.10.tcl: Line  44: W Found constant "array1" which is also a variable.
+Err.10.tcl: Line  45: W Found constant "array1" which is also a variable.
+Checking file Err.11.tcl
+Err.11.tcl: Line  21: N Non constant argument to global: $arrayVar
+Err.11.tcl: Line  24: W Unknown command "for{set"
+Err.11.tcl: Line  34: N Non constant argument to global: $arrayVar
+Err.11.tcl: Line  37: E Could not complete statement.
+                        One double quote would complete the first line
+                        One double quote would complete the script body at line 39.
+Err.11.tcl: Line  43: W Found constant "array1" which is also a variable.
+Err.11.tcl: Line  44: W Found constant "array1" which is also a variable.
+Err.11.tcl: Line  45: W Found constant "array1" which is also a variable.
+Checking file Err.12.tcl
+Err.12.tcl: Line   2: E Could not complete statement.
+                        Two close braces would complete the first line
+                        One close brace would complete the script body at line 21.
+                        Assuming completeness for further processing.
+Err.12.tcl: Line   2: E Wrong number of arguments (2) to "proc"
+Err.12.tcl: Line   4: N Found non indented close brace that did not end statement.
+                        This may indicate a brace mismatch.
+Err.12.tcl: Line  19: N Found non indented close brace that did not end statement.
+                        This may indicate a brace mismatch.
+Checking file Err.13.tcl
+Err.13.tcl: Line  21: W Unknown command "tempFileName"
+Err.13.tcl: Line  22: W Unknown command "tempFileName"
+Checking file Err.14.tcl
+Err.14.tcl: Line  27: W Unknown command "tempFileName"
+Err.14.tcl: Line  28: W Unknown command "tempFileName"
+Checking file Err.15.tcl
+Err.15.tcl: Line   3: E Could not complete statement.
+                        One close bracket would complete the first line
+                        One close bracket would complete the script body at line 13.
+Err.15.tcl: Line  27: W Found constant "i1" which is also a variable.
+Checking file Err.16.tcl
+Err.16.tcl: Line   9: E Could not complete statement.
+                        One double quote would complete the first line
+                        One double quote would complete the script body at line 10.
+Err.16.tcl: Line  12: W No braces around expression in if statement.
+Err.16.tcl: Line  18: W Found constant "x" which is also a variable.
+Err.16.tcl: Line  19: W No braces around expression in if statement.
+Err.16.tcl: Line  19: E Bad expression: extra tokens at end of expression

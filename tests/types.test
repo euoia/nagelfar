@@ -1,0 +1,44 @@
+#------------------------------------------------------------*- tcl -*-
+# Tests for types
+#----------------------------------------------------------------------
+# $Revision$
+#----------------------------------------------------------------------
+
+test types-1.1 {
+    Types checking
+} -body {
+    createTestFile {
+        set apa [list x y z]
+        llength $apa
+    }
+    execTestFile
+} -result {%%}
+
+test types-2.1 {
+    Types in overwritten vars.
+} -body {
+    createTestFile {
+        set apa [frame .f -padx 3 -pady 3]
+        $apa configure -gurkmeja 2
+        set apa "Hej"
+        $apa gurkmeja
+        set apa [button .b]
+        $apa configure -gurkmeja 2
+    }
+    execTestFile
+} -result {%%Line   3: E Bad option -gurkmeja to "_obj,frame configure"
+Line   7: E Bad option -gurkmeja to "_obj,button configure"}
+
+test types-3.1 {
+    Types in arrays
+} -body {
+    createTestFile {
+        set w .t
+        set data(sbar)   [scrollbar $w.sbar]
+        set data(canvas) [canvas $w.canvas]
+        $data(sbar) configure -command [list $data(canvas) xview]
+        $data(canvas) configure -xscrollcommand [list $data(sbar) set]
+    }
+    execTestFile
+} -result {%%}
+

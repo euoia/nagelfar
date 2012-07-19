@@ -1,0 +1,137 @@
+#------------------------------------------------------------*- tcl -*-
+# Tests for individual procedures in Nagelfar's source
+#----------------------------------------------------------------------
+# $Revision$
+#----------------------------------------------------------------------
+
+interp create slave
+set file nagelfar.tcl
+if {[file exists ${file}_i]} {
+    set file ${file}_i
+}
+slave eval set _nagelfar_test 1
+slave eval source $file
+slave eval loadDatabases
+slave eval {set ::currentFile ""}
+
+proc NoPuts {args} {
+    set ::SlavePuts $args
+}
+slave eval {rename puts __puts}
+interp alias slave puts {} NoPuts
+
+proc doSplitScript {body} {
+    slave eval [list set ::body $body]
+    slave eval {set ::body [buildLineDb $::body]}
+    slave eval {splitScript $::body 0 ::statements ::indices ::knownVars}
+    return [slave eval set ::statements]
+}
+
+proc doSplitList {body} {
+    slave eval [list set ::body $body]
+    slave eval {set ::body [buildLineDb $::body]}
+    slave eval {splitList $::body 0 ::indices ::wordstatuses}
+    set ws [slave eval set ::wordstatuses] ;# Do anyting with this?
+    return [slave eval set ::indices]
+}
+
+proc slaveTime {script n} {
+    set slScr [list time $script $n]
+    puts [slave eval $slScr]
+    return {}
+}
+
+test code-1.1 {
+    splitScript
+} -body {
+    set body {
+        hej
+        du
+        glade
+    }
+    set stmnts [doSplitScript $body]
+} -result [list hej\n du\n glade\n]
+
+test code-1.2 {
+    splitScript
+} -body {
+    set body {
+        for {} \
+                $apa "hej" \; [miffo {
+                }
+                              ]\\; hej
+    }
+    llength [doSplitScript $body]
+} -result 2
+
+test code-2.1 {
+    scanWord
+} -body {
+    set str "asdj asdkajhd {adalsda} \"asdjaslkdj\" asdfsdflkj"
+    set len [string length $str]
+    set res {}
+    lappend res [slave eval [list scanWord $str $len 0 5]]
+    lappend res [slave eval [list scanWord $str $len 0 14]]
+    lappend res [slave eval [list scanWord $str $len 0 24]]
+    lappend res [slave eval [list scanWord $str $len 0 37]]
+
+    slave eval set ::Nagelfar(allowExpand) 1
+    set str "asdj {expand}asdkajhd {expand}{adalsda} {expand}\"asdjaslkdj\" "
+    set len [string length $str]
+    lappend res [slave eval [list scanWord $str $len 0 22]]
+} -result {12 22 35 46 38}
+
+test code-2.2 {
+    scanWord, benchmark
+} -constraints "xxx" -body {
+    set str "asdj asdkajhd {adalsda} \"asdjaslkdj\" asdfsdflkj"
+    set len [string length $str]
+    set n 10000
+    slave eval set ::Nagelfar(allowExpand) 1
+    slaveTime [list scanWord $str $len 0 5] $n
+    slaveTime [list scanWord $str $len 0 14] $n
+    slaveTime [list scanWord $str $len 0 24] $n
+} -result {}
+
+test code-2.3 {
+    skipWS 
+} -body {
+    set str "asdj \t asdk\t\txxx   "
+    set len [string length $str]
+    set res {}
+    lappend res [slave eval [list skipWS $str $len 4]]
+    lappend res [slave eval [list skipWS $str $len 11]]
+    lappend res [slave eval [list skipWS $str $len 16]]
+} -result {7 13 19}
+
+test code-2.4 {
+    scanWord
+} -body {
+    set str "asdj \{adal"
+    set len [string length $str]
+    set res {}
+    lappend res [slave eval [list scanWord $str $len 0 5]]
+    lappend res $::SlavePuts
+} -result [list 10 [list stderr {Internal error: Did not find close char in scanWord. Line 1.}]]
+
+test code-3.1 {
+    splitList
+} -body {
+    set body {hej  {d\}a{b}a\\d\{u}  "gl\na\\de" \ \\x\   hej}
+    doSplitList $body
+} -result [list 0 6 24 35 44]
+
+test code-3.2 {
+    splitList
+} -body {
+    set body {hej {}z y}
+    doSplitList $body
+    slave eval set ::Nagelfar(currentMessage)
+} -result {Line   1: E Bad list}
+
+if {[slave eval info procs ::_instrument_::cleanup] ne ""} {
+    interp alias slave puts {}
+    slave eval {rename __puts puts}
+    slave eval ::_instrument_::cleanup
+}
+interp delete slave

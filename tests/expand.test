@@ -1,0 +1,65 @@
+#------------------------------------------------------------*- tcl -*-
+# Tests for {*} expansion
+#----------------------------------------------------------------------
+# $Revision$
+#----------------------------------------------------------------------
+
+test expand-1.1 {
+    Standard cases
+} -constraints {runin85} -body {
+    createTestFile {
+        set apa [list hej hopp]
+        set bepa [list {*}$apa]
+    }
+    execTestFile
+} -result {%%}
+
+test expand-1.2 {
+    Standard cases
+} -constraints {runin85}  -body {
+    createTestFile {
+        set apa [list hej hopp]
+        {*}$apa hej hopp apa
+    }
+    execTestFile
+} -result {%%}
+
+test expand-2.1 {
+    Simple errors
+} -constraints {runin85}  -body {
+    createTestFile {
+        set apa [list hej hopp]
+        {*}$bepa hej hopp apa
+    }
+    execTestFile
+} -result {%%Line   3: E Unknown variable "bepa"}
+
+test expand-2.2 {
+    Simple errors
+} -constraints {runin85}  -body {
+    createTestFile {
+        set apa [list hej hopp]
+        {*}$bepa hej hopp apa
+    }
+    execTestFile
+} -result {%%Line   3: E Unknown variable "bepa"}
+
+test expand-2.3 {
+    Simple errors
+} -constraints {runin85}  -body {
+    createTestFile {
+        set apa {*}{hej}
+        set bepa {*}{hej hopp}
+    }
+    execTestFile
+} -result {%%Line   3: E Wrong number of arguments (3) to "set"}
+
+test expand-3.1 {
+    New syntax warning
+} -constraints {runin85} -body {
+    createTestFile {
+        set apa [list hej hopp]
+        set bepa [list {*} $apa]
+    }
+    execTestFile
+} -result {%%Line   2: N Standalone {*} can be confusing. I recommend "*".}

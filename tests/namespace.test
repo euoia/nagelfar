@@ -1,0 +1,251 @@
+#------------------------------------------------------------*- tcl -*-
+# Tests for namespaces
+#----------------------------------------------------------------------
+# $Revision$
+#----------------------------------------------------------------------
+
+test namespace-1.1 {
+    Namespaces, procs in namespace
+} -body {
+    createTestFile {
+        namespace eval apa {}
+        proc bepa {onearg} {
+            return $onearg
+        }
+        proc apa::bepa {hej hopp} {
+            set apa $hej
+        }
+        proc apa::cepa {hej hopp} {
+            # This should resolve to the namespace version
+            set apa [bepa $hej $hopp]
+        }
+    }
+    execTestFile
+} -result {%%}
+
+test namespace-1.2 {
+    Namespaces, procs in namespace
+} -body {
+    createTestFile {
+        namespace eval apa {
+            proc bepa {hej hopp san} {
+                set apa $hej
+            }
+        }
+        proc apa::cepa {hej hopp} {
+            set apa [bepa $hej $hopp]
+            set apa [apa::bepa $hej $hopp]
+            set apa [::apa::bepa $hej $hopp]
+        }
+    }
+    execTestFile
+} -result {%%Line\s+8: E Wrong num.*Line\s+9: E Wrong num.*Line\s+10: E Wrong num} -match regexp
+
+test namespace-1.3 {
+    Namespaces, procs in namespace
+} -body {
+    createTestFile {
+        namespace eval apa {}
+        proc apa::cepa {hej hopp} {
+            # This should resolve to the namespace version
+            set apa [bepa $hej $hopp]
+        }
+        proc apa::bepa {hej hopp} {
+            set apa $hej
+        }
+        proc bepa {onearg} {
+            return $onearg
+        }
+    }
+    execTestFile
+} -result {%%}
+
+test namespace-2.1 {
+    Namespaces, imported procs
+} -body {
+    createTestFile {
+        namespace eval apa {}
+        proc apa::bepa {hej hopp} {
+            set apa $hej
+        }
+        namespace import apa::bepa
+        proc cepa {hej hopp} {
+            set apa [bepa $hej $hopp]
+        }
+    }
+    execTestFile
+} -result {%%}
+
+test namespace-2.2 {
+    Namespaces, imported procs
+} -body {
+    createTestFile {
+        namespace eval apa {}
+        proc apa::bepa {hej hopp} {
+            set apa $hej
+        }
+        namespace eval gurka {
+            namespace import apa::bepa
+            proc depa {hej hopp} {
+                set apa [bepa $hej $hopp]
+            }
+        }
+        proc cepa {hej hopp} {
+            set apa [gurka::bepa $hej $hopp]
+        }
+    }
+    execTestFile
+} -result {%%}
+
+test namespace-3.1 {
+    Namespaces, eval
+} -body {
+    createTestFile {
+        set apa hejsan
+        namespace eval $apa {}
+    }
+    execTestFile
+} -result {%%}
+
+test namespace-3.2 {
+    Namespaces, eval
+} -body {
+    createTestFile {
+        set apa hejsan
+        namespace eval $apa {
+            proc hopp {x y} {
+                # This line should be checked
+                set x $z
+            }
+        }
+        # Neither of these should be known
+        hejsan::hopp
+        hopp
+    }
+    execTestFile
+} -result {%%Line   6: E Unknown variable "z"
+Line  10: W Unknown command "hejsan::hopp"
+Line  11: W Unknown command "hopp"}
+
+test namespace-3.3 {
+    Namespaces, eval
+} -body {
+    createTestFile {
+        proc hejsan::mupp {x y} {
+            set x
+        }
+        proc mupp {x} {
+            set x
+        }
+        set apa hejsan
+        namespace eval $apa {
+            proc hopp {x y} {
+                # This line resolves to the global mupp
+                mupp $x
+            }
+        }
+    }
+    execTestFile
+} -result {%%}
+
+test namespace-3.4 {
+    Namespaces, eval and variable
+} -body {
+    createTestFile {
+        namespace eval nspace {
+            set rundir "rdir"
+        }
+        puts "$nspace::rundir"
+    }
+    execTestFile
+} -result {%%}
+
+test namespace-4.1 {
+    Namespaces, procs 2-pass
+} -body {
+    createTestFile {
+        proc apa::cepa {hej hopp} {
+            set apa [bepa $hej $hopp happ]
+        }
+        proc apa::bepa {hej hopp} {
+            set apa $hej
+        }
+    }
+    execTestFile -flags -dbpicky
+} -result {%%Line   3: E Wrong number of arguments (3) to "apa::bepa"}
+
+test namespace-4.2 {
+    Namespaces, procs 2-pass, ns eval version
+} -body {
+    createTestFile {
+        namespace eval apa {
+            proc cepa {hej hopp} {
+                set apa [bepa $hej $hopp happ]
+            }
+            proc bepa {hej hopp} {
+                set apa $hej
+            }
+        }
+    }
+    execTestFile
+} -result {%%Line   4: E Wrong number of arguments (3) to "apa::bepa"}
+
+test namespace-5.1 {
+    Namespaces, variable
+} -body {
+    createTestFile {
+        proc apa::bepa {ns} {
+            variable hej
+            variable ${ns}::hopp
+            set x $hej
+            set y $hopp
+            # This is a common idiom for namespaces
+            set ${ns}::hopp xx
+        }
+    }
+    execTestFile
+} -result {%%}
+
+test namespace-5.2 {
+    Namespaces, variable
+} -body {
+    createTestFile {
+        proc apa::bepa {ns} {
+            variable $ns
+            set x 1
+        }
+    }
+    execTestFile
+} -result {%%Line   3: N Non constant argument to variable: $ns}
+
+test namespace-6.1 {
+    Fully qualified path
+} -body {
+    createTestFile {
+        ##nagelfar syntax apa x v
+        ::apa 1 2
+        ##nagelfar syntax bepa::cepa x v
+        ::bepa::cepa 1 2
+    }
+    execTestFile
+} -result {%%Line   3: E Unknown variable "2"
+Line   5: E Unknown variable "2"}
+
+test namespace-6.2 {
+    Fully qualified path
+} -body {
+    createTestFile {
+        proc apa {a bName} {
+            upvar 1 $bName b
+            return $b
+        }
+        ::apa 1 2
+        proc bepa::cepa {a bName} {
+            upvar 1 $bName b
+            return $b
+        }
+        ::bepa::cepa 1 2
+    }
+    execTestFile
+} -result {%%Line   6: E Unknown variable "2"
+Line  11: E Unknown variable "2"}

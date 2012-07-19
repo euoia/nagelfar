@@ -1,0 +1,36 @@
+Explanations of some error messages.
+
+"Found constant "x" which is also a variable."
+
+  This is the error for detecting missing $.
+  This is also a common source for false errors. Typically with commands
+  that use call-by-name, or when using simple variable names.
+  For example, this will give such a message: $w configure -anchor w
+  If the constant is within quotes no warning is issued so in the example
+  above you can get rid of it by doing -anchor "w".
+
+"Could not complete statement."
+
+  A valid end of this statement could not be found. This means that
+  a brace, quote or bracket is missing.
+  The message may be followed by extra info that can help figure out
+  what happened.
+
+"Close brace not aligned with line \u003cl\u003e (\u003ci1\u003e \u003ci2\u003e)"
+
+  It is assumed that a close brace is indented equally to the line
+  where its corresponding open brace is (line \u003cl\u003e).
+  The open brace's indent level is \u003ci1\u003e and the close brace's \u003ci2\u003e.
+  This error may indicate a brace mismatch, an indentation slip
+  or just that you have a different indentation style.
+
+"Found non indented close brace that did not end statement. This may
+ indicate a brace mismatch."
+
+  A close brace that is not indented should normally end the
+  preceeding statement. See also above.
+
+"Close brace first in statement."
+
+  A close brace was seen where a command should start.
+  Typically a brace mismatch.

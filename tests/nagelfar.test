@@ -1,0 +1,1028 @@
+#------------------------------------------------------------*- tcl -*-
+# Generic tests for Nagelfar
+#----------------------------------------------------------------------
+
+test nagelfar-1.1 {
+    Command line checks
+} -body {
+    createTestFile {
+        set apa $bepa
+    }
+    execTestFile -fn _____
+} -returnCodes 1 -result {Could not find file '_____'}
+
+test nagelfar-1.2 {
+    Command line checks
+} -body {
+    createTestFile {
+        set apa $bepa
+    }
+    execTestFile -encoding gurkmeja
+} -returnCodes 1 -result {*Bad encoding name: "gurkmeja"*} -match glob
+
+test nagelfar-1.3 {
+    Command line checks
+} -body {
+    createTestFile {
+        set apa bepa
+    }
+    execTestFile -encoding ascii
+} -returnCodes 0 -result {%%}
+
+test nagelfar-1.4 {
+    Command line checks
+} -body {
+    createTestFile {
+        set apa bepa
+    }
+    execTestFile -flags -quiet
+} -returnCodes 0 -result {}
+
+test nagelfar-1.5 {
+    Command line checks
+} -body {
+    createTestFile {
+        set apa bepa
+    }
+    execTestFile -glob {_test*e_}
+} -returnCodes 0 -result {%%Checking file _testfile_}
+
+test nagelfar-1.6 {
+    Command line checks
+} -body {
+    createTestFile {
+        set apa bepa
+    }
+    execTestFile -flags -miffo
+} -returnCodes 0 -result {Unknown option -miffo*} -match glob
+
+test nagelfar-1.7 {
+    Command line checks
+} -body {
+    createTestFile {
+        set apa bepa
+    }
+    execTestFile -flags -h
+} -returnCodes 0 -result {Version*Usage: *} -match glob
+
+test nagelfar-2.1 {
+    Basic functionality
+} -body {
+    createTestFile {
+        set bepa 2
+        set apa $bepa
+        return -1
+        return -code error -1
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-2.2 {
+    Basic functionality
+} -body {
+    createTestFile {
+        set apa $bepa
+    }
+    execTestFile -filter *Unknown*
+} -result {%%}
+
+test nagelfar-2.3 {
+    Basic functionality
+} -body {
+    createTestFile {
+        proc apa {w} {
+            variable Priv
+            global Torv
+
+            after cancel $Torv(afterId)
+            puts $Priv(repeated)
+            incr Priv(repeated)
+        }
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-2.4 {
+    Basic functionality
+} -body {
+    createTestFile {
+        # A test to just excersise parsing
+        proc apa {w} {
+            set apa 1
+            set bepa(x) 1
+            set ::cepa 3
+            # Expression
+            set apa [expr {[pid] + 1 + $apa}]
+            set apa [expr {"a\nb\\c" eq " [pid] $apa "}]
+            # Misc, empty script
+            lindex $apa 0 ;;list [] [lindex $apa 1]
+            # Variables
+            list $apa ${apa} $bepa(x) ${bepa(x)} $bepa($apa) $::cepa ${}
+            # Backslashes
+            list apa\nbepa\\xy\tsdkj\$urga\[moos\]skj
+            # Write more here
+        }
+    }
+    execTestFile
+} -result {%%}
+
+
+test nagelfar-3.1 {
+    Basic errors
+} -body {
+    createTestFile {
+        set apa $bepa
+    }
+    execTestFile
+} -result {%%Line   2: E Unknown variable "bepa"}
+
+test nagelfar-3.2 {
+    Basic errors
+} -body {
+    createTestFile {
+        proc hej {a b c} {
+        }
+        set apa [hej a b]
+    }
+    execTestFile
+} -result {%%Line   4: E Wrong number of arguments (2) to "hej"}
+
+test nagelfar-3.3 {
+    Basic errors
+} -body {
+    createTestFile {
+        list apa [list a b [list a b]] a]
+        list apa [list a b [list a b] a]]
+    }
+    execTestFile
+} -result {%%Line   2: N Unescaped end bracket*Line   3: N Unescaped end bracket} -match glob
+
+test nagelfar-3.4 {
+    Basic errors
+} -body {
+    createTestFile {
+        set apa bepa
+        set cepa [set $apa]
+    }
+    execTestFile
+} -result {%%Line   3: N Suspicious variable name "$apa"}
+
+test nagelfar-3.5 {
+    Basic errors
+} -constraints runin84 -body {
+    createTestFile {
+        proc apa {w} {
+            set Miffo(gurka) 1
+
+            incr Miffo(hampa)
+            incr Miffo(gurka)
+        }
+    }
+    execTestFile -flags "-s syntaxdb84.tcl"
+} -result {%%Line   5: E Unknown variable "Miffo(hampa)"}
+
+test nagelfar-3.6 {
+    Basic errors
+} -body {
+    createTestFile "
+        proc hej {a b c} { }
+        set apa \[hej a \\\n b]
+    "
+    execTestFile
+} -result {%%Line   3: E Wrong number of arguments (2) to "hej"*Argument 2 at line 4} -match glob
+
+test nagelfar-3.7 {
+   Move this somewhere FIXA
+} -body {
+    createTestFile {
+        proc apa {x} {
+            if {[info exists y]} {
+                list $y
+            }
+        }
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-3.8 {
+    Basic errors
+} -body {
+    createTestFile {
+        apa bepa
+	a'pa bepa
+	a%pa bepa
+    }
+    execTestFile
+} -match glob -result {%%Line   2: W Unknown command "apa"*Line   3: W Unknown command "a'pa"*Line   4: E Strange command "a%pa"}
+
+test nagelfar-3.9 {
+    Basic errors
+} -body {
+    createTestFile "
+        set apa bepa
+	\}
+    "
+    execTestFile
+} -result {%%Line   3: E Unbalanced close brace found}
+
+test nagelfar-3.10 {
+    Basic errors
+} -body {
+    createTestFile {
+        if{[set apa 1]} {
+            set apa $bepa
+        }
+    }
+    execTestFile
+} -result {%%Line   2: W Suspicious command "if{[set apa 1]}"}
+
+test nagelfar-3.11 {
+    Basic errors
+} -body {
+    createTestFile {
+        proc x {y} {
+            list {x y}{z w}
+        }
+    }
+    execTestFile
+} -result {%%Line   3: E Extra chars after closing brace*was on line 3.*missing space*} \
+        -match glob
+
+test nagelfar-3.12 {
+    Basic errors
+} -body {
+    createTestFile {
+        list apa [list "a" b\" "a b" a"]
+        list apa [list "a b" beep\""]
+    }
+    execTestFile
+} -result {%%Line   2: N Unescaped quote*Line   3: N Unescaped quote} -match glob
+
+test nagelfar-3.13 {
+    Basic errors
+} -body {
+    createTestFile {
+        [list command with extra brackets]
+        [list command with extra brackets] but not alone
+    }
+    execTestFile
+} -result {%%Line   2: N Suspicious brackets around command}
+
+test nagelfar-4.1 {
+    Options checking
+} -body {
+    createTestFile {
+        lsort -ascii -command xxx -decreasing -dictionary -increasing \
+                -index 0 -integer -real -unique [list 1 2 3]
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-4.2 {
+    Options checking
+} -body {
+    createTestFile {
+        lsort -d [list 1 2 3]
+    }
+    execTestFile
+} -result {%%Line   2: E Ambigous option for "lsort", -d -> -decreasing/-dictionary}
+
+test nagelfar-4.3 {
+    Options checking
+} -body {
+    createTestFile {
+        lsort -dictionary -index [list 1 2 3]
+    }
+    execTestFile
+} -result {%%Line   2: E Wrong number of arguments (3) to "lsort"}
+
+# This error gives a different message which I hope I can correct.
+test nagelfar-4.4 {
+    Options checking
+} -constraints {
+    knownbug
+} -body {
+    createTestFile {
+        fconfigure xx -blocking 1 -encoding 0 -mode
+    }
+    execTestFile
+} -result {*Missing value for last option*} -match glob
+
+test nagelfar-4.5 {
+    Options checking
+} -body {
+    createTestFile {
+        # This should see that i is set
+        string is integer -strict -failindex i 789
+        puts $i
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-4.6 {
+    Options checking
+} -body {
+    createTestFile {
+        # Here, -apa cannot be an option
+        string match -apa gurka
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-4.7 {
+    Options checking
+} -body {
+    createTestFile {
+        # There was a bug with glob chars in options
+        string match -?* gurka burka
+    }
+    execTestFile
+} -result {%%Line   3: E Bad option -?* to "string match"}
+
+test nagelfar-4.8 {
+    Options checking
+} -body {
+    createTestFile {
+        # Shortening should not affect other checking
+        string equal -length 2 apa bepa
+        string equal -len    2 apa bepa
+    }
+    execTestFile
+} -result {%%Line   4: W Shortened option for "string equal", -len -> -length}
+
+test nagelfar-6.1 {
+    Expression checking
+} -body {
+    createTestFile {
+        expr {1 + ""}
+    }
+    execTestFile
+} -result {%%Line   2: E Bad expression: can't use empty string as operand of "+"}
+
+test nagelfar-6.2.1  {
+    Expression checking
+} -constraints runin84 -body {
+    createTestFile {
+        set apa 1
+        expr {1 + $apa /}
+    }
+    execTestFile
+} -result {%%Line   3: E Bad expression: premature end of expression}
+
+test nagelfar-6.2.2 {
+    Expression checking
+} -constraints runin85 -body {
+    createTestFile {
+        set apa 1
+        expr {1 + $apa /}
+    }
+    execTestFile
+} -result {%%Line   3: E Bad expression: missing operand at _@_
+in expression "1 + ${dummy} /_@_"}
+
+test nagelfar-6.3 {
+    Expression checking
+} -body {
+    createTestFile {
+        set apa 10
+        set bepa 5
+        # This gave a divide by zero error in the first implementation
+        expr {1 / ($apa - $bepa)}
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-6.4 {
+    Expression checking
+} -body {
+    createTestFile {
+        set apa 10
+        expr {$apa == {$bepa}}
+        expr {$apa == "${apa}_gugg"}
+        expr {$apa == "[list hej]_gugg"}
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-6.5 {
+    Expression checking
+} -body {
+    createTestFile {
+        if {[string length xxx} { set apa 1 }
+    }
+    execTestFile
+} -result {%%Line   2: E Missing close bracket at end of expression}
+
+test nagelfar-6.6 {
+    Expression checking
+} -body {
+    createTestFile {
+        # Noone should call expr from an expression
+        if {[expr {5 + 3}]} { set apa 1 }
+        # Nested is ok
+        if {[lindex x [expr {5 + 3}]]} { set apa 1 }
+    }
+    execTestFile
+} -result {%%Line   3: N Expr called in expression}
+
+test nagelfar-7.1 {
+    Command: upvar
+} -body {
+    createTestFile {
+        upvar 1 bepa
+    }
+    execTestFile
+} -result {%%Line   2: E Wrong number of arguments (2) to "upvar"}
+
+test nagelfar-7.2 {
+    Command: upvar
+} -body {
+    createTestFile {
+        set x hej
+        upvar 1 bepa $x
+    }
+    execTestFile
+} -result {%%Line   3: N Suspicious upvar variable "$x"}
+
+test nagelfar-7.3 {
+    Command: upvar
+} -body {
+    createTestFile {
+        set x hej
+        upvar $x $x bepa
+    }
+    execTestFile
+} -result {%%Line   3: N Non constant level to upvar: "$x"}
+
+test nagelfar-7.4 {
+    Command: upvar
+} -body {
+    createTestFile {
+        upvar bepa bepa
+        llength $bepa
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-7.5 {
+    Command: upvar
+} -body {
+    createTestFile {
+        upvar \#0 bepa bepa
+        llength $bepa
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-8.1 {
+    Variable handling
+} -constraints knownbug -body {
+    createTestFile {
+        proc hej {x y} {
+            global item
+            list item($x,$y)
+        }
+    }
+    execTestFile
+} -result {should detect missing dollar}
+
+test nagelfar-8.2 {
+    Variable handling, -novar flag
+} -body {
+    createTestFile {
+        proc hej {x y} {
+            set apa bepa
+            set cepa apa
+        }
+    }
+    execTestFile -flags -novar
+} -result {%%}
+
+test nagelfar-9.1 {
+    if statement, as comment
+} -body {
+    createTestFile {
+        if 0 {
+            set y $x1
+        }
+        if {0} {
+            set y $x2
+        }
+        if { 0 } {
+            set y $x3
+        }
+        if 0 then {
+            set y $x4
+        } elseif "0" {
+            set y $x5
+        }
+        expr {$y}
+    }
+    execTestFile
+} -result {%%Line  16: E Unknown variable "y"}
+
+test nagelfar-10.1 {
+    Brace alignment
+} -constraints {
+    knownbug
+} -body {
+    createTestFile "
+        cmd xx yy \\
+            apa {
+               hejsan
+            }
+    "
+    execTestFile
+} -result {%%}
+
+test nagelfar-10.2 {
+    Brace alignment
+} -body {
+    createTestFile {
+        list xx yy {
+            hejsan
+         }
+    }
+    execTestFile
+} -result {%%Line   4: N Close brace not aligned with line 2 (8 9)}
+
+test nagelfar-10.3 {
+    Brace alignment and style
+} -body {
+    createTestFile {
+        if {[catch {
+            set apa 2
+        } msg]} {
+            set apa 1
+        }
+    }
+    set res [execTestFile]
+} -returnCodes 0 -result {%%}
+
+test nagelfar-10.2 {
+    Brace alignment
+} -body {
+    createTestFile {
+        set words 0
+        set n0 0
+        lappend r [expr {([lindex $words $n0] & 0xff000000)
+                         | ([lindex $words $n0] & 0x00ff0000)
+                         | ([lindex $words $n0] & 0x0000ff00)
+                         | ([lindex $words $n0] & 0x000000ff)}]
+        lappend r [expr {([lindex $words $n0] & 0xff000000)
+                         | ([lindex $words $n0] & 0x00ff0000)
+                         | ([lindex $words $n0] & 0x0000ff00)
+                         | ([lindex $words $n0] & 0x000000ff)
+                     }]
+        set x 0
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-11.1 {
+    Line numbers
+} -body {
+    createTestFile "
+        list xx yy \\
+                zz \$y
+        set apa \$bepa
+        if 1 {
+            list xx yy \\
+                    zz \\
+                    zz \\
+                    zz \\
+                    \$x
+        }
+    "
+    execTestFile
+} -result {^%%Line\s+3:.*Line\s+4:.*Line\s+10:} -match regexp
+
+test nagelfar-11.2 {
+    Line numbers, line 1
+} -body {
+    createTestFile {apa bepa
+    }
+    execTestFile
+} -result {%%Line   1: W Unknown command "apa"}
+
+test nagelfar-11.3 {
+    Line numbers, last line without newline
+} -body {
+    createTestFile {
+        apa bepa}
+    execTestFile
+} -result {%%Line   2: W Unknown command "apa"}
+
+test nagelfar-12.1 {
+    Comments, bad in switch
+} -body {
+    createTestFile {
+        switch [list] {
+            hej {
+                set x 1
+            }
+            # A bad comment
+            hopp {
+                set y 1
+            }
+        }
+    }
+    execTestFile
+} -result "%%Line   6: W Switch pattern starting with #. This could be a bad comment.*" -match glob
+
+test nagelfar-12.2 {
+    Comments, bad in list
+} -body {
+    createTestFile {
+        array set apa {
+            elem1 val1
+            # A bad comment
+            elem2 val2
+        }
+    }
+    execTestFile
+} -result "%%Line   4: N Suspicious \# char. Possibly a bad comment."
+
+test nagelfar-12.3 {
+    Comments, bad in list
+} -body {
+    createTestFile {
+        miffo apa {
+            elem1 val1
+            # A bad comment
+            elem2 val2
+        }
+        proc miffo {a b} {}
+    }
+    execTestFile -flags -2pass
+} -result "%%Line   4: N Suspicious \# char. Possibly a bad comment."
+
+test nagelfar-12.4 {
+    Comments, should not complain too much
+} -body {
+    createTestFile {
+        if {[catch {
+            set apa bepa
+            # An ok comment
+            set apa bepa
+        }]} {
+            # An ok comment
+        }
+        if 0 {
+            set apa bepa
+            # An ok comment
+            set apa bepa
+        }
+    }
+    execTestFile
+} -result "%%"
+
+test nagelfar-13.1 {
+    Syntax database, multiple ?
+} -body {
+    createTestFile {
+        array set hej {1 2}
+        array names hej
+        array names hej *a*
+        array names hej -regexp *a*
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-13.2 {
+    Syntax database, v token
+} -body {
+    createTestFile "
+        ##nagelfar syntax Miffo v
+
+        set apa \[Miffo \\
+                hej\]
+    "
+    execTestFile
+} -result "%%Line   5: E Unknown variable \"hej\""
+
+test nagelfar-13.3 {
+    Syntax database, n token
+} -body {
+    createTestFile "
+        ##nagelfar syntax Miffo n
+        set hej 1
+        set apa \[Miffo \\
+                \$hej\]
+    "
+    execTestFile
+} -result "%%Line   5: N Suspicious variable name \"\$hej\""
+
+test nagelfar-13.4 {
+    Syntax database, misc
+} -body {
+    createTestFile {
+        # Inline regsub
+        regsub apa bepa cepa
+        regsub apa bepa cepa depa
+        # Correct time
+        time {set x 1}
+        time {set y $x} 5
+        set y
+        # Correct bind
+        bind .
+        bind . <Key>
+        bind . <Key> { lindex $y 1 }
+    }
+    execTestFile
+} -result {%%Line  12: E Unknown variable "y"}
+
+# Testing the after command which has the special thing
+# of accepting either an int or a subcommand as first argument.
+test nagelfar-17.1 {
+    Command: after
+} -body {
+    createTestFile { # FIXA: Implement and test this properly
+        after 10
+        after 20 {set apa 5}
+        set id [after 30 set apa 5]
+        after cancel $id
+        after cancel set apa 5
+        after idle {set apa 5}
+        after idle set apa 5
+        after info $id
+    }
+    execTestFile
+} -result {%%}
+
+
+test nagelfar-18.1 {
+    Command: subcommands
+} -body {
+    # Proper detection of subcommands should tell the test that
+    # apa is a variable name.
+    createTestFile {
+        set apa 1
+        trace variable apa w list
+        trace add variable apa write list
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-19.1 {
+    interp alias, aliases ambiguity
+} -body {
+    createTestFile {
+        interp aliases
+        interp alia
+    }
+    execTestFile
+} -result {%%Line   3: E Ambigous subcommand for "interp", alia -> alias/aliases}
+
+test nagelfar-19.2 {
+    interp alias, recognise
+} -body {
+    createTestFile {
+        interp alias {} lfilter {} lsearch -all -inline
+        set apa [list hej hopp]
+        lfilter $apa h*
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-19.3 {
+    interp alias, track
+} -body {
+    createTestFile {
+        interp alias {} lfilter {} lsearch -all -inline
+        set apa [list hej hopp]
+        lfilter -miffo $apa h*
+    }
+    execTestFile
+} -result {%%Line   4: E Bad option -miffo to "lsearch"}
+
+test nagelfar-19.4 {
+    interp alias, track
+} -body {
+    createTestFile {
+        interp alias {} strncmp {} string match -nocase
+        set apa "hej hopp"
+        strncmp h* $apa
+        strncmp -nocase h* $apa
+    }
+    execTestFile
+} -result {%%Line   5: E Wrong number of arguments (5) to "string match"}
+
+test nagelfar-19.5 {
+    interp alias, track
+} -body {
+    createTestFile {
+        interp alias {} strncmp {} string match -nocasd
+        set apa "hej hopp"
+        strncmp h* $apa
+    }
+    execTestFile
+} -result {%%Line   4: E Bad option -nocasd to "string match"}
+
+test nagelfar-20.1 {
+    switch
+} -body {
+    createTestFile {
+        set x 1
+        set y {1 5}
+        set apa [switch $x $y]
+    }
+    execTestFile
+} -result {%%}
+
+test nagelfar-20.2 {
+    switch
+} -body {
+    createTestFile {
+        set y {1 5}
+        set apa [switch -glob $y]
+    }
+    execTestFile
+} -result {%%Line   3: N String argument to switch is constant}
+
+test nagelfar-20.3 {
+    switch
+} -body {
+    createTestFile {
+        set y {1 5}
+        switch $y {
+            # { # Recognise this comment style }
+            "#" { # Really get hash for pattern
+            }
+            x {
+            }
+            others { # Possibly mistaken "others" for "default"
+            }
+        }
+    }
+    execTestFile
+} -result {%%Line   9: N Switch pattern "others" could be a mistaken "default"}
+
+test nagelfar-21.1 {
+    Embedded
+} -body {
+    createTestFile {
+        set apa bepa
+    }
+    interp create apa
+    apa eval set ::Nagelfar(embedded) 1
+    set file nagelfar.tcl
+    set instr 0
+    if {[file exists ${file}_i]} {
+        set instr 1
+        set file ${file}_i
+    }
+    apa eval source $file
+    set res [apa eval [list synCheck _testfile_ syntaxdb.tcl]]
+    if {$instr} {
+        apa eval ::_instrument_::cleanup
+    }
+    interp delete apa
+    set res
+} -returnCodes 0 -result {{Checking file _testfile_}}
+
+test nagelfar-22.1 {
+    end-of-file
+} -body {
+    createTestFile "
+        set x 1
+        set y \u001a
+        set apa \$miffo
+    "
+    execTestFile
+} -result {%%Line   3: E Unknown variable "y"
+Line   3: N Aborted script due to end-of-file marker}
+
+test nagelfar-23.1 {
+    HTML generation
+} -body {
+    createTestFile {
+        proc hej {a b c} {
+        }
+        set apa [hej a b]
+    }
+    execTestFile -flags -html
+} -result {%%<a href=#4>Line   4</a>: <font color=#DD0000><strong>ERROR</strong></font>: Wrong number of arguments (2) to &quot;hej&quot;}
+
+test nagelfar-24.1 {
+    New line in subst body
+} -body {
+    createTestFile {
+        set apa [list x;list y]
+        set apa [list x
+                 list y]
+    }
+    execTestFile
+} -result {%%Line   3: N Newline in command substitution}
+
+test nagelfar-24.2 {
+    New line in subst body
+} -body {
+    createTestFile {
+        set apa [expr {[list x ; list y]}]
+        set apa [expr {[list x
+                        list y]}]
+    }
+    execTestFile
+} -result {%%Line   3: N Newline in command substitution}
+
+test nagelfar-25.1 {
+    tailcall
+} -body {
+    createTestFile {
+        tailcall
+        tailcall list
+        # Detect wrong number of args
+        tailcall set apa bepa cepa
+        # Correctly parse it
+        tailcall set epa bepa
+        # Variable should be known now
+        list $epa
+    }
+    execTestFile -flags "-s syntaxdb86.tcl"
+} -result {%%Line   2: E Wrong number of arguments (0) to "tailcall"
+Line   5: E Wrong number of arguments (3) to "set"}
+
+test nagelfar-25.2 {
+    tailcall, types
+} -body {
+    createTestFile {
+        # Check that types get through to and from a tailcall
+        set w [tailcall frame .f]
+        tailcall $w configure -miffo
+    }
+    execTestFile -flags "-s syntaxdb86.tcl"
+} -result {%%Line   4: E Bad option -miffo to "_obj,frame configure"}
+
+test nagelfar-26.1 {
+    array/scalar checks
+} -body {
+    createTestFile {
+        # Very obvious error
+        set arr(3) a
+        set arr 2
+    }
+    execTestFile
+} -result {%%Line   4: E Is scalar, was array}
+
+test nagelfar-26.2 {
+    array/scalar checks
+} -body {
+    createTestFile {
+        # Very obvious error
+        set arr a
+        set arr(3) 2
+    }
+    execTestFile
+} -result {%%Line   4: E Is array, was scalar}
+
+test nagelfar-26.3 {
+    array/scalar checks
+} -body {
+    createTestFile {
+        # Very obvious error
+        set arr(3) a
+        list $arr
+    }
+    execTestFile
+} -result {%%Line   4: E Is scalar, was array}
+
+test nagelfar-26.4 {
+    array/scalar checks
+} -body {
+    createTestFile {
+        # Very obvious error
+        set arr a
+        list $arr(3)
+    }
+    execTestFile
+} -result {%%Line   4: E Is array, was scalar}
+
+test nagelfar-26.5 {
+    array/scalar checks
+} -body {
+    createTestFile {
+        # Recognise array set as array
+        array set arr {a b c d}
+        set arr 2
+    }
+    execTestFile
+} -result {%%Line   4: E Is scalar, was array}
+
+test nagelfar-26.6 {
+    array/scalar checks
+} -body {
+    createTestFile {
+        # Old markup must be seen as unknown
+        ##nagelfar syntax apa n
+        ##nagelfar syntax bepa v
+        apa var
+        set var 2
+        bepa var
+        apa var2
+        set var2(x) x
+        bepa var2
+        bepa var2(x)
+    }
+    execTestFile
+} -result {%%}

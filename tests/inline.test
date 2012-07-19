@@ -1,0 +1,313 @@
+#------------------------------------------------------------*- tcl -*-
+# Tests for inlining information in comments.
+#----------------------------------------------------------------------
+# $Revision$
+#----------------------------------------------------------------------
+
+test inline-1.1 {
+    Basic syntax
+} -body {
+    createTestFile {
+        ##nagelfar
+        ##nagelfar "aaka
+        ##nagelfar hubert
+        ##nagelfar syntax Miffo x x
+
+        Miffo a b c
+    }
+    execTestFile
+} -result {%%Line   3: N Bad list in ##nagelfar comment
+Line   4: N Bad type in ##nagelfar comment
+Line   7: E Wrong number of arguments (3) to "Miffo"}
+
+test inline-1.2 {
+    Subcommand syntax
+} -body {
+    createTestFile {
+        ##nagelfar syntax Miffo s x
+        ##nagelfar syntax Miffo\ subc2 x x
+
+        Miffo subc1 a
+        Miffo subc2 b c
+    }
+    execTestFile
+} -result {%%}
+
+test inline-2.1 {
+    Subcommands
+} -body {
+    createTestFile {
+        ##nagelfar syntax Miffo s x
+        ##nagelfar subcmd Miffo apa bepa beepa cepa
+
+        Miffo apa a b
+        Miffo be b
+    }
+    execTestFile
+} -result {%%Line   5: E Wrong number of arguments (3) to "Miffo"
+Line   6: E Ambigous subcommand for "Miffo", be -> bepa/beepa}
+
+test inline-2.2 {
+    Subcommands, append
+} -body {
+    createTestFile {
+        ##nagelfar subcmd+ string mysubcmd
+        ##nagelfar syntax string\ mysubcmd x x
+        string mysubcmd x y
+        string mysubcmd x y z
+    }
+    execTestFile
+} -result {%%Line   5: E Wrong number of arguments (4) to "string mysubcmd"}
+
+test inline-3.1 {
+    Options
+} -body {
+    createTestFile {
+        ##nagelfar syntax Miffo o* x
+        ##nagelfar option Miffo -apa -bepa -beepa -cepa
+
+        Miffo -apa -cepa a
+        Miffo -be b
+    }
+    execTestFile
+} -result {%%Line   6: E Ambigous option for "Miffo", -be -> -bepa/-beepa}
+
+test inline-3.2 {
+    Option type
+} -body {
+    createTestFile {
+        ##nagelfar syntax Miffo o* x
+        ##nagelfar option Miffo -apa -cepa
+        ##nagelfar option Miffo\ -apa n
+
+        Miffo -apa xx -cepa a
+        set bepa $xx
+    }
+    execTestFile
+} -result {%%}
+
+test inline-4.1 {
+    Return
+} -body {
+    createTestFile {
+        ##nagelfar syntax Miffo x x
+        ##nagelfar return Miffo varName
+
+        set apa [Miffo a b]
+        set $apa
+    }
+    execTestFile
+} -result {%%}
+
+test inline-5.1 {
+    variable
+} -body {
+    createTestFile {
+        ##nagelfar variable Gurka
+        set apa [lindex $Gurka 1]
+    }
+    execTestFile
+} -result {%%}
+
+test inline-5.2 {
+    variable, with type
+} -body {
+    createTestFile {
+        ##nagelfar variable Gurka varName
+        button .b -textvariable $Gurka
+    }
+    execTestFile
+} -result {%%}
+
+test inline-5.3 {
+    variable, with type, fully qualified
+} -body {
+    createTestFile {
+        ##nagelfar variable ::Gurka varName
+        button .b -textvariable $::Gurka
+
+        ##nagelfar variable ::Gurka2(hippo) varName
+        button .b -textvariable $::Gurka2(hippo)
+    }
+    execTestFile
+} -result {%%}
+
+test inline-6.1 {
+    ignore/filter
+} -body {
+    createTestFile {
+        ##nagelfar ignore
+        set apa [Miffo a b c]
+        ##nagelfar filter Unknown variable
+        set apa [lindex $Gurka 1]
+        ##nagelfar filter variable
+        set apa [Miffo a b c]
+        # FRINK: nocheck
+        set apa [Miffo a b c]
+        # PRAGMA: nocheck
+        set apa [Miffo a b c]
+    }
+    execTestFile
+} -result {%%Line   7: W Unknown command "Miffo"}
+
+test inline-6.2 {
+    ignore level
+} -body {
+    createTestFile {
+        set apa 1
+        ##nagelfar ignore N
+        variable $apa
+        ##nagelfar ignore N
+        set apa [Miffo a b c]
+        ##nagelfar ignore N
+        set apa $bepa
+    }
+    execTestFile
+} -match glob -result {%%Line   6: W Unknown command*
+Line   8: E Unknown variable*}
+
+test inline-6.3 {
+    ignore level
+} -body {
+    createTestFile {
+        set apa 1
+        ##nagelfar ignore W
+        variable $apa
+        ##nagelfar ignore W
+        set apa [Miffo a b c]
+        ##nagelfar ignore W
+        set apa $bepa
+    }
+    execTestFile
+} -match glob -result {%%Line   8: E Unknown variable*}
+
+test inline-7.1 {
+    Inline in syntax file
+} -body {
+    # TODO: pass on global variable type info between files
+    createTestFile {
+        ##nagelfar syntax apa x n
+        ##nagelfar variable Gurka1
+        variable Gurka2 1
+        set Gurka3 1
+    } 1
+    createTestFile {
+        set x 1
+        apa 5 x
+        puts $Gurka1
+        puts $Gurka2
+        puts $Gurka3
+    }
+    execTestFile
+} -result {xx%%}
+
+test inline-8.1 {
+    Inline in db file
+} -body {
+    set ch [open apa.miffo w]
+    puts $ch {
+        ##nagelfar syntax apa x n
+    }
+    close $ch
+    createTestFile {
+        set x 1
+        apa 5 x
+    }
+    set res [execTestFile -flags "-s apa.miffo"]
+    file delete apa.miffo
+    set res
+} -result {%%}
+
+test inline-8.2 {
+    Inline in db file
+} -body {
+    set ch [open apa.miffo w]
+    puts $ch {
+        ##nagelfar
+        ##nagelfar "aaka
+        ##nagelfar hubert
+    }
+    close $ch
+    createTestFile {
+        set x 1
+    }
+    set res [execTestFile -flags "-s apa.miffo"]
+    file delete apa.miffo
+    set res
+} -result {Bad list in ##nagelfar comment in db apa.miffo line 3
+Bad type in ##nagelfar comment in db apa.miffo line 4
+%%}
+
+test inline-9.1 {
+    Copy
+} -body {
+    createTestFile {
+        ##nagelfar copy string mystring
+        mystring length x x
+    }
+    execTestFile
+} -result {%%Line   3: E Wrong number of arguments (3) to "mystring length"}
+
+test inline-9.2 {
+    Copy with mapping
+} -body {
+    createTestFile {
+        ##nagelfar copy string mystring x n
+        mystring equal x y
+        list $x $y
+    }
+    execTestFile
+} -result {%%}
+
+test inline-10.1 {
+    implicitvar
+} -body {
+    createTestFile {
+        ##nagelfar syntax itcl::class x cn
+        ##nagelfar syntax itcl::class::common n x?
+        ##nagelfar syntax itcl::class::method x cv
+        ##nagelfar implicitvar itcl::class::test this v1 v2
+        itcl::class test {
+            common v1 0
+            common v2 0
+            method showvalues {} {
+                puts "$this has values $v1 $v2 but not $a"
+            }
+        }
+    }
+    execTestFile
+} -result {%%Line  10: E Unknown variable "a"}
+
+test inline-10.2 {
+    implicitvar
+} -body {
+    createTestFile {
+        ##nagelfar syntax itcl::class x cn
+        ##nagelfar syntax itcl::class::common n x?
+        ##nagelfar syntax itcl::class::method x x cl
+        ##nagelfar syntax itcl::class::proc x cv
+        ##nagelfar implicitvar itcl::class::test::proc   apa bepa
+        ##nagelfar implicitvar itcl::class::test::method apa cepa
+        itcl::class test {
+            common apa 0
+            method m1 {} {
+                puts "$apa $bepa $cepa"
+            }
+            proc p1 {} {
+                puts "$apa $bepa $cepa"
+            }
+        }
+    }
+    execTestFile
+} -result {%%Line  11: E Unknown variable "bepa"
+Line  14: E Unknown variable "cepa"}
+
+test inline-11.1 {
+    Alias
+} -body {
+    createTestFile {
+        ##nagelfar alias mystring string
+        mystring length x x
+    }
+    execTestFile
+} -result {%%Line   3: E Wrong number of arguments (3) to "string length"}

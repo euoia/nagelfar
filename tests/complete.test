@@ -1,0 +1,51 @@
+#------------------------------------------------------------*- tcl -*-
+# Generic tests for Nagelfar
+#----------------------------------------------------------------------
+
+test complete-1.1 {
+    Missing quote
+} -body {
+    createTestFile {
+        proc bepa {} {
+            # Missing quote
+            set apa "hej hopp
+        }
+        # A quote just to fix syntax coloring "
+    }
+    execTestFile
+} -result {%%Line   4: E Could not complete statement.
+            One double quote would complete the first line
+            One double quote would complete the script body at line 5.}
+
+test complete-2.1 {
+    Missing bracket
+} -body {
+    createTestFile {
+        proc cepa {} {
+            # Missing bracket
+            set apa [hej hopp
+        }   
+    }
+    execTestFile
+} -result {%%Line   4: E Could not complete statement.
+            One close bracket would complete the first line
+            One close bracket would complete the script body at line 5.}
+
+test complete-3.1 {
+    Missing brace
+} -body {
+    createTestFile [string map [list %\} ""] {
+        proc depa {} {
+            # Missing close brace
+            if {[string length apa]%} {
+                set bepa 1
+            }
+        }
+        list
+    }]
+    execTestFile
+} -match glob -result {%%Line   2: E Could not complete statement.
+            One close brace would complete the first line
+            One close brace would complete at end of line 7.
+            One close brace would complete the script body at line 10.
+            Assuming completeness for further processing.*}

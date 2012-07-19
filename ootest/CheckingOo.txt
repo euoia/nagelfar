@@ -1,0 +1,229 @@
+--------------------------------------------------------------------------
+A class defintion is resolved in a virtual namespace denoted by the
+"cn" syntax token. The virtual namespace is named after the calling
+command and its arguments.  Examples:
+##nagelfar syntax itcl::class do cn
+itcl::class Test { ... }
+Virtual namespace: itcl::class::Test
+##nagelfar syntax snit::type do cn
+snit::type pdf4tcl::pdf4tcl { ... }
+Virtual namespace: snit::type::pdf4tcl::pdf4tcl
+##nagelfar syntax oo:class\ create do cn
+oo::class create Account { ... }
+Virtual namespace: oo::class\ create::Account
+--------------------------------------------------------------------------
+Since name resolution works up the namespaces, class definition subcommands
+can be defined in the top virtual namespace for the class definition:
+##nagelfar syntax itcl::class::constructor cv
+##nagelfar syntax itcl::class::method dm
+##nagelfar syntax snit::type::constructor cv
+##nagelfar syntax snit::type::method dm
+##nagelfar syntax oo::class\ create::constructor cv
+##nagelfar syntax oo::class\ create::method dm
+--------------------------------------------------------------------------
+The properties of the defined class command varies with the system involved.
+Itcl:
+##nagelfar syntax Test dc=_obj,Test
+##nagelfar return Test _obj,Test
+Snit:
+##nagelfar syntax pdf4tcl::pdf4tcl dc=_obj,pdf4tcl p*
+##nagelfar option pdf4tcl::pdf4tcl -file
+##nagelfar return pdf4tcl::pdf4tcl _obj,pdf4tcl
+TclOO:
+##nagelfar syntax Account s x*
+##nagelfar subcmd Account create new
+##nagelfar syntax Account\ create dc=_obj,Account x?
+##nagelfar return Account\ create _obj,Account
+##nagelfar syntax Account\ new x?
+##nagelfar return Account\ new _obj,Account
+--------------------------------------------------------------------------
+An instantiated object is handled by a name starting with the magic
+marker "_obj,".  Most systems give an object command similar to this:
+##nagelfar syntax _obj,Account s x*
+##nagelfar subcmd _obj,Account deposit withdraw transfer dump destroy variable
+##nagelfar syntax _obj,Account\ deposit x
+--------------------------------------------------------------------------
+Commands that are available in a class' methods need to be defined
+within its virtual namespace.
+Example: method m2 in class Test, for itcl where methods are directly visible
+##nagelfar syntax itcl::class::Test::m2 0
+Example: method my in TclOO, that is always the same as on object
+##nagelfar copy _obj,Account oo::class\ create::Account::my
+--------------------------------------------------------------------------
+If return types has been set up properly, an object is tracked in code
+like this:
+set a [Account new "John Doe"]
+$a deposit 200
+The critical definitions are:
+##nagelfar return Account\ new _obj,Account
+##nagelfar syntax _obj,Account s x*
+--------------------------------------------------------------------------
+If syntax definitions has been set up properly, when an explicitely named
+instance is made, it is defined
+Test t1
+t1 dostuff
+The critical definition is:
+##nagelfar syntax Test dc=_obj,Test
+Defining it manually is also possible:
+##nagelfar copy _obj,Test t1
+--------------------------------------------------------------------------
+Sometimes it is necessary to declare a variable as an object:
+proc testingwithproc {ob} {
+    ##nagelfar variable ob _obj,mystuff
+    $ob dostuff
+}
+##nagelfar syntax testingwithproc2 x(_obj,mystuff)
+proc testingwithproc2 {ob} {
+    $ob dostuff
+}
+--------------------------------------------------------------------------
+Implicitely available variables needs to be defined in each virtual namespace
+##nagelfar implicitvar itcl::class::Test::proc   c1
+##nagelfar implicitvar itcl::class::Test::method x1 x2 x3 c1
+##nagelfar implicitvar snit::type::pdf4tcl::pdf4tcl self\ _obj,pdf4tcl pdf
+##nagelfar implicitvar oo::class\ create::foo x
+--------------------------------------------------------------------------
+The syntax token "do" (define object) automatically adds an _obj,xxx command.
+xxx is the tail of the defined name. Examples:
+itcl::class Test { ... }
+Object command: _obj,Test
+snit::type pdf4tcl::pdf4tcl { ... }
+Object command: _obj,pdf4tcl
+oo::class create Account { ... }
+Object command: _obj,Account
+If it does not exist before, add it with "s x*" as syntax.
+--------------------------------------------------------------------------
+The syntax token "do" also adds _obj,xxx as "current object".
+Method definitions (syntax token "dm") will be added as subcommands to
+the object.
+Example, if method "met" is defined when current object is "_obj,y",
+it corresponds to this:
+##nagelfar subcmd+ _obj,y met
+##nagelfar syntax _obj,y\ met x*
+--------------------------------------------------------------------------
+Handles simple string subst in ##nagelfar copy.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+Needed stuff:
+Delay copy operation until second pass.
+Or, set up copy as an alias.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+This rest of this file contains notes collected over time about OO checking.
+Some of it has been implemented but maybe not as mentioned here.
+Look in the code examples for up to date handling.
+--------------------------------------------------------------------------
+The main problem with checking OO-style code is lines like this:
+
+  $obj dosomething $arg
+
+Since nagelfar does not know the command, it does not know the syntax
+for it, and specially if an argument is a code block, it will not know
+that it should check into it.
+
+Basically what is needed is types.  If the type of $obj is known it
+can be checked.
+By introducing return types of commands and types of variables code
+like this becomes checkable:
+
+  set w [frame .f]
+  $w configure -apa hej
+
+Still a problem:
+  proc x {w} {
+    $w configure -apa hej
+  }
+
+Fixed by inline comment:
+  proc x {w} {
+    ##nagelfar variable w _obj,frame
+    $w configure -apa hej
+  }
+
+Still a problem:
+  frame .f
+  .f configure -apa hej
+
+Another problem:
+  frame $top.f
+  $top.f configure -apa hej
+
+--------------------------------------------------------------------------
+[ Feature Request #2569 ] Snit/OO support
+
+Date: 2007-Apr-03 15:04
+Sender: escargo
+Logged In: YES 
+user_id=34055
+Browser: Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.3) Gecko/20070309
+Firefox/2.0.0.3
+
+I just thought I would mention that I am a snit user (and
+have been for a while).  I have not applied Nagelfar to any
+snit code, but I can appreciate how having it supported
+would be useful.
+
+Date: 2006-Dec-18 12:22
+Sender: pspjuth
+Logged In: YES 
+user_id=14104
+Browser: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; InfoPath.1)
+
+One problem with OO is tracking types.
+If [obj] is defined to return an object, [set a [obj]]
+will currently note a's type so that [$a cmd] can be
+checked.
+But what is a good way for e.g. proc args?
+proc cmd {a} {
+    ##nagelfar object a <type>
+    $a dosomething
+}
+or maybe in syntax descriptions?
+##nagelfar syntax cmd x:type
+
+Date: 2006-Aug-22 14:05
+Sender: pspjuth
+Logged In: YES 
+user_id=14104
+Browser: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; InfoPath.1)
+
+Some thoughts about how Snit can be better
+supported, and maye some other OO too.
+
+snit::type typename codeblock
+
+The "codeblock" might be checked in a virtual
+namespace where procs like "pragma"
+and "constructor" exists.
+Maybe a syntax code for it. Like "c:snit::_virtual_"
+
+"typename" needs to define a new command,
+similar to "proc".
+A syntax code for it?
+
+A notion of "current command" to allow "method"
+to add to the subcommand list.
+
+
+--------------------------------------------------------------------------
+How to handle implicit variables?
+Retain a list of implicit variables for a proc?
+--------------------------------------------------------------------------
+
+##nagelfar syntax xyz x p*
+##nagelfar option xyz -opt
+##nagelfar return xyz _obj,xyz
+##nagelfar syntax _obj,xyz s p*
+##nagelfar option _obj,xyz -opt
+##nagelfar subcmd _obj,xyz meth1 meth2
+##nagelfar syntax _obj,xyz\ meth1 x x
+##nagelfar syntax _obj,xyz\ meth2 x x*
+
+snit::type xyz {
+    option -opt -default 10
+    variable var
+    constructor {args} {...}
+    destructor {...}
+    method meth1 {x y} {...}
+    method meth2 {x args} {...}
+}
