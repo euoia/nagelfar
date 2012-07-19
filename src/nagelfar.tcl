@@ -2191,6 +2191,21 @@ proc parseStatement {statement index knownVarsName} {
                 catch {unset ::foreachVar($fVar)}
             }
 	}
+	dict {
+		# Rudimentary attempt at handling "dict for".
+		# TODO: Fix this properly by adding "variable list" in syntax definitions.
+	    if {[lindex $argv 0] == "for"} {
+			if {$argv != 4} {
+				WA
+				return
+			}
+
+			set kvarList [lindex $argv 1]
+			foreach var $kvarList {
+				markVariable $var 1 "" 1 $index known knownVars ""
+			}
+		}
+	}
 	if {
 	    if {$argc < 2} {
 		WA
