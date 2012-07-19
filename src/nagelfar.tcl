@@ -2195,7 +2195,7 @@ proc parseStatement {statement index knownVarsName} {
 		# Rudimentary attempt at handling "dict for".
 		# TODO: Fix this properly by adding "variable list" in syntax definitions.
 	    if {[lindex $argv 0] == "for"} {
-			if {$argv != 4} {
+			if {$argc != 4} {
 				WA
 				return
 			}
