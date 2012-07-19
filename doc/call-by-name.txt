@@ -1,0 +1,34 @@
+A common source of false warnings have to do with call-by-name.
+
+When analysing a procedure, Nagelfar will detect "upvar" usage and
+set up a syntax description accordingly.
+Example, the following procedure:
+
+proc Incr {varName val} {
+    upvar $varName var
+    set var [expr {$var + $val}]
+}
+
+will get the syntax description "v x" where "v" indicates variable name.
+
+There are limitations to this detection though, in that it is neither
+100% accurate unless the code is straightforward, and it is only detected
+in the second pass of the analysis.
+
+Nagelfar uses two passes when analyzing a file.  In the first, only
+"namespace eval" and "proc" are analyzed to collect basic information
+about procedures.  This allows procs to be in any order in the file and
+still be checked correctly.  However, since procedure bodies are not
+processed in the first pass, the "Incr" procedure above will get "x x"
+stored as its syntax description and not until the "Incr" is processed
+in the second pass it is corrected to "v x".
+
+This means that a procedure like "Incr" above needs to be defined earlier
+in the file than it is used, or you have to provide the syntax description
+yourself.  The latter is also necessary when Nagelfar's automatic detection
+doesn't do the right thing.
+
+You provide a syntax description using inline comments
+(see doc/inlinecomments.txt).  For the example above it would be:
+
+##nagelfar syntax Incr v x

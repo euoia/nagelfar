@@ -1,0 +1,40 @@
+# This is a supplement to the source file nagelfar.tcl to provide
+# extra syntax info for it.
+# Whenever <file>.tcl is checked, any <file>.syntax is run through
+# the syntax checker first.
+
+# Comments of the style below can be included in the source file
+# or in a file like this if that is not suitable.
+
+# The syntax tokens (x/v/n etc.) are described in syntaxbuild.tcl
+# More info can be found in the doc about inline comments.
+
+
+# This procedure takes four arguments, the third being a call-by-name
+# where the variable is set by the proc. The fourth is a call-by-name
+# where the variable should exist before.
+
+##nagelfar syntax parseSubst x x n v
+
+# This procedure takes three arguments, the third being a
+# call-by-name where the variable should exist before.
+
+##nagelfar syntax parseBody x x v x?
+
+# Argument 6 and 7 to markVariable is a call-by-name where
+# the variable is set by this call and need not exist before.
+
+##nagelfar syntax markVariable x x x x x x n n
+
+# This application uses TkDnd but since the standard database usually
+# do not know about 'dnd', it is included here to avoid false warnings.
+
+##nagelfar syntax dnd s x*
+
+# The "s" above denotes a subcommand, and those can be listed like this.
+
+##nagelfar subcmd dnd bindtarget cleartarget
+
+# Additional syntax can be defined for a subcommand
+
+##nagelfar syntax dnd\ bindtarget 4

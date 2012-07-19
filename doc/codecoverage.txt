@@ -1,0 +1,104 @@
+<ul>Code Coverage</ul>
+
+Nagelfar has support for doing simple code coverage analysis.
+
+
+Instrument each file:
+nagelfar.tcl -instrument apa.tcl
+
+That creates apa.tcl_i
+
+Make your tests run the instrumented file.  If a file is sourced from an
+instrumented file, an instrumented version (i.e. one called _i) will be
+read if it exists.  Thus you only need to adjust the top file being called
+from the test, if all other files are accessed through source.
+
+You do not need to keep the instrumented name. You can rename them back
+to the original if you cannot use _i or the automatic "source" redirection
+for some reason.
+
+The source under test must terminate using the "exit" command.  The
+instrumentation uses the exit command to produce the result, thus it needs
+to be called to work as expected.
+
+If you cannot end your tests with "exit", you can call the internal command
+::_instrument_::cleanup manually. Note that this command name is not
+guaranteed, so try to use "exit".
+
+Running tests creates apa.tcl_log.
+Coverage data is accumulated in the log file so multiple tests can
+be run.  Make sure the log file is deleted before a rerun.
+
+Create a markup file for displaying result:
+nagelfar.tcl -markup apa.tcl
+
+This reads coverage data from apa.tcl_log and creates apa.tcl_m. The markup
+file contains markers in blocks that were not run.
+
+See uncovered parts by comparing original with markup in a graphical
+diff tool, like eskil:
+
+eskil -noparse apa.tcl apa.tcl_m
+
+
+<ul>Example</ul>
+
+Nagelfar's testsuite has code like this to automatically run the
+instrumented file:
+    set file nagelfar.tcl
+    if {[file exists ${file}_i]} {
+        set file ${file}_i
+    }
+
+Below is the makefile lines used by Nagelfar to test itself.
+
+# Source files for code coverage
+SRCFILES = nagelfar.tcl
+IFILES   = $(SRCFILES:.tcl=.tcl_i)
+LOGFILES = $(SRCFILES:.tcl=.tcl_log)
+MFILES   = $(SRCFILES:.tcl=.tcl_m)
+
+# Instrument source file for code coverage
+%.tcl_i: %.tcl
+	@./nagelfar.tcl -instrument $<
+
+# Target to prepare for code coverage run. Makes sure log file is clear.
+instrument: $(IFILES)
+	@rm -f $(LOGFILES)
+
+# Run tests to create log file.
+$(LOGFILES): $(IFILES)
+	@./tests/all.tcl $(TESTFLAGS)
+
+# Create markup file for better view of result
+%.tcl_m: %.tcl_log 
+	@./nagelfar.tcl -markup $*.tcl
+
+# View code coverage result
+icheck: $(MFILES)
+	@for i in $(SRCFILES) ; do eskil -noparse $$i $${i}_m & done
+
+# Remove code coverage files
+clean:
+	@rm -f $(LOGFILES) $(IFILES) $(MFILES)
+
+
+<ul>Naming conventions</ul>
+
+When xxx is instrumented, result is called xxx_i.
+
+The "source" command is overloaded to prefer xxx_i if
+it exists, when xxx is sourced.
+
+Instrumented files can be renamed to the original before running,
+if that is desired.
+
+The log files for xxx_i or xxx is called xxx_log.
+At startup any existing log is read, to accumulate info.
+
+The "exit" command is overloaded to call ::_instrument_::cleanup,
+which produces the logs.  If you cannot end your tests with "exit",
+you can call ::_instrument_::cleanup manually. Note that this
+command name is not guaranteed, so try to use "exit".
+
+Markup of xxx reads xxx_log and produces xxx_m.
